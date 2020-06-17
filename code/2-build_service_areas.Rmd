@@ -1,0 +1,225 @@
+---
+title: "Construct office service areas"
+author: 
+  - "Cole Tanigawa-Lau"
+date: ""
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  theme: paper
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 7, fig.height = 5)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r about, echo=FALSE, results = "asis"}
+cat(
+  sprintf("Updated: %s.", 
+          format(Sys.time(), "%b %d, %Y at %H:%M:%S", usetz = TRUE)),
+  sprintf("Working directory: `%s`.", getwd()),
+  sep = "\n\n"
+)
+```
+
+This script begins the process of linking offices to Census demographics. I create a set of office-specific service areas within each state. I rebuild the service areas for each year to account for office closures. Trade-offs of rebuilding more or less?
+
+
+Reads:
+
+  - data/offices_sf.rds
+
+Writes:
+
+  - data/service_areas/*
+
+# Setup
+
+```{r packages, warning=FALSE, message=FALSE}
+rm(list = ls())
+
+library(sf)
+library(dplyr)
+library(ggplot2)
+```
+
+
+```{r func}
+tessalate <- function(office_sf, area_sf, date){
+  # Remove offices closed before date
+  offices <- 
+    office_sf %>% 
+    .[which(is.na(.$date_closed) | date < .$date_closed), ]
+  
+  # Begin building sf output
+  df <- data.frame(year = substr(date, 1, 4), 
+                   state = office_sf$state %>% unique(), 
+                   office = offices$name)
+  
+  # Tessalate
+  # st_voronoi requires geometry collections
+  tess <- 
+    st_voronoi(st_combine(offices), envelope = st_combine(area_sf)) %>% 
+    # Cast from multi- to separate polygons
+    st_cast()
+  
+  
+  tess_ind <- st_within(offices, tess) %>% as.integer()
+  out <- st_sf(df, geometry = tess[tess_ind, ])
+  
+  # This crop is really just aesthetic since interpolation happens within state
+  # It also doubles the run time.
+  # %>% 
+  #   st_crop(y = states_sfl[[.x]])
+  
+  return(out)  
+}
+
+
+```
+
+
+```{r}
+offices <- readRDS("data/offices_sf.rds")
+```
+
+# Inspect quality of geocoding
+```{r}
+prop.table(table(offices$type, offices$loctype))
+```
+
+
+# Voronoi tesselation
+Steps to link offices to their service areas:
+
+  1) Split offices by state
+  2) Build Voronoi tesselation
+  3) Return list of sf objects: one polygon sf data.frame for each state
+  4) Bind into a single sf object.
+
+```{r include = FALSE}
+# In sf method, difficult to set envelope inside grouped statement. Using split-apply-combine instead.
+
+# vor_state <- 
+#   group_by(offices, state) %>% 
+#   summarize(geometry = st_union(geometry)) %>% 
+#   st_voronoi()
+```
+
+```{r results = "hide"}
+states_sf <- 
+  tigris::states(cb = TRUE, class = "sf")
+
+# Transform to projected CRS for st_intersection
+states_sfl <- split(states_sf %>% st_transform(3857), states_sf$STUSPS)[offices$state]
+off_sfl    <- split(offices %>% st_transform(3857), offices$state)[offices$state]
+```
+
+Envelope removes some outlying points, probably bad (OOS) locations from geocoding. Need to use a spatial intersection to link back to offices.
+
+```{r messages = FALSE, warning = FALSE}
+state_vorl <- 
+  purrr::map(unique(offices$state),
+      ~ st_voronoi(off_sfl[[.x]] %>% st_combine(), 
+                   envelope = states_sfl[[.x]] %>% st_combine()) %>%
+        st_cast() %>% 
+        st_sf(state = .x, #name = off_sfl[[.x]]$name, 
+              geometry = .) %>% st_crop(y = states_sfl[[.x]])
+  )
+
+
+voronoi <- dplyr::bind_rows(state_vorl)
+```
+
+### California plot
+```{r}
+ggplot(voronoi %>% filter(state %in% c("CA"))) +
+  geom_sf(data = states_sf %>% filter(STUSPS == "CA")) + 
+  geom_sf(alpha = 0.2) + 
+  geom_sf(size = 0.5,
+          data = offices %>% filter(state == "CA")) +
+  theme_void()
+```
+
+
+# Execute for dynamic service areas
+
+Data cover office closures from 2000 to 2014. The service-area divisions of a state changes after any of its offices closes. Constructing the service areas is fast, so there's no problem doing building new service areas for each states after every year of closures.
+
+The bottleneck is going to be the call to `st_interpolate_aw()` in a later spatial-joining script. I'll contain the interpolation within state boundaries. Remember to check whether the service area changed from the previous year before running again. 
+
+```{r include = FALSE}
+offclose <- offices[!is.na(offices$date_closed), ]
+table(lubridate::year(offclose$date_closed), offclose$state)
+
+unique(offclose$date_closed) %>% lubridate::month() %>% table() %>% hist()
+```
+
+The spatial intersection that links offices to their service areas grabs a _random_ office name if the Voronoi tile covers multiple offices.
+```{r message = FALSE, warning = FALSE}
+years <- 2000:2015
+dates <- sprintf("%d-01-01", years)
+set.seed(575)
+```
+
+
+```{r message = FALSE, warning = FALSE}
+states <- names(states_sfl)
+
+# system.time(
+#   yr_test <- 
+#     Map(tessalate, office_sf = off_sfl[states], area_sf = states_sfl[states],
+#         date = "2008-01-01")
+# )
+##   user  system elapsed 
+## 35.832   1.036  37.005 
+
+
+
+system.time(
+  vor_lyrs <- 
+  parallel::mclapply(dates, 
+                     function(.x)
+                       Map(tessalate, 
+                           office_sf = off_sfl[states], area_sf = states_sfl[states],
+                           date = .x) %>% bind_rows(),
+                     mc.cores = 6)
+  )
+
+#    user  system elapsed 
+# 297.548   4.948 132.828 
+
+vor_yrs <- bind_rows(vor_lyrs)
+```
+
+Reorganize and export by state for easier joining down the road.
+```{r}
+voronoi_states <- split(vor_yrs, vor_yrs$state)
+```
+
+### Oklahoma plots
+```{r}
+ggplot(voronoi_states[["OK"]]) + 
+  geom_sf(aes(color = year), alpha = 0.1, fill = NA) + 
+  # facet_wrap("year") + 
+  theme_void()
+
+ggplot(voronoi_states[["OK"]]) + 
+  geom_sf() + 
+  facet_wrap("year") +
+  theme_void()
+```
+
+
+
+# Export
+```{r}
+coler::save_list(voronoi_states, dir = "data/service_areas", ext = ".rds")
+```
+

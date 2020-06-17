@@ -1,0 +1,173 @@
+---
+title: "Geocode SSA offices"
+author: 
+  - "Cole Tanigawa-Lau"
+date: ""
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  theme: paper
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 7, fig.height = 5)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r about, echo=FALSE, results = "asis"}
+cat(
+  sprintf("Updated: %s.", 
+          format(Sys.time(), "%b %d, %Y at %H:%M:%S", usetz = TRUE)),
+  sprintf("Working directory: `%s`.", getwd()),
+  sep = "\n\n"
+)
+```
+
+
+Reads:
+ - None
+
+Writes:
+
+  - data/offices/geocode_pass1.csv
+  - data/offices/geocode_pass2.csv
+
+# Setup
+
+```{r packages, warning=FALSE, message=FALSE}
+rm(list = ls())
+
+
+library(dplyr)
+library(sf)
+library(data.table)
+library(tidycensus)
+library(ggmap)
+library(coler)
+```
+
+The `offices_quart` and `stations` data come from the [SSA website](https://www.ssa.gov/open/data/FO-RS-Address-Open-Close-Time-App-Devs.html). They are updated quarterly and include a unique ID. The `offices2016` data are never updated and do not contain a unique ID; however, the do have office-closure dates.
+
+```{r}
+offices_quart <- fread("https://www.ssa.gov/open/data/FO-Address-Open-Close-Times.csv", skip = 6)
+
+stations <- fread("https://www.ssa.gov/open/data/FO-RS-Address-Open-Close-Times.csv", skip = 6)
+
+offices2016 <- fread("https://www.ssa.gov/policy/docs/data/field-offices-2016/field-office-listing-2016.csv")
+```
+
+# Preprocessing
+
+The 2016 data contain all but one of the resident stations. There are a 184 of offices in the 2016 list that aren't in the other data set. I can confirm that closed offices are removed from the quarterly updated data, so that's probably why.[^1]
+The bigger mystery is why 58 offices appear in the quarterly updated data but not in the 2016 list. It's hard to believe that the SSA opened 58 new offices in the last few years.
+
+[^1]: The names look pretty standardized, so I don't think it's just a cleaning problem. Ordering substrings gains only three matches.
+
+
+```{r include = FALSE, eval = FALSE}
+stations[!stations$`Office Name` %in% offices2016$`Office Name`, ]
+
+offices2016[`Close Date (if applicable)` != "", 
+            mean(`Office Name` %in% offices_quart$`Office Name`)]
+
+offices2016[ {`Office Name` %>% order_substr()} %notin%
+              {offices_quart$`Office Name` %>% order_substr()}
+            ]
+
+offices_quart[{`Office Name` %>% order_substr()} %notin%
+                {offices2016$`Office Name` %>% order_substr()}]
+```
+
+```{r}
+offices <- 
+  offices2016 %>% 
+
+  mutate(zip = lz_pad(`Zip Code`, width = 5)) %>% 
+  
+  transmute(
+    # oid = `Office Code`,
+    name = `Office Name`,
+    date_closed = as.Date(`Close Date (if applicable)`,
+                          format = "%m/%d/%y"),
+    
+    address = paste(
+      `Address Line 1`,
+      `Address Line 2`,
+      `Address Line 3`,
+      `Address Line 4`,
+      City, State, zip, 
+      sep = ", "
+      ),
+    state = State
+  )
+
+
+setDT(offices)
+offices[ , address := gsub(" , ", " ", address)]
+offices[ , address := gsub(", NA,", "", address)]
+
+# Mark resident stations (much fewer services offered)
+offices[stations,
+        station := 1,
+        on = c(name = "Office Name")]
+
+offices[is.na(station), station := 0]
+```
+
+# Geocoding
+These chunks were previously evaluated and the results exported. It'll waste money to re-run the geocoding every time.
+
+```{r eval = FALSE}
+system.time(
+  locs <- ggmap::geocode(location = offices$address, 
+                         output = "more")
+)
+
+#   user  system elapsed 
+# 30.445   2.969 722.974 
+
+fwrite(locs, "data/offices/geocode_pass3.csv")
+```
+
+```{r}
+locs <- fread("data/offices/geocode_pass3.csv")
+offices <- data.table(offices, locs)
+```
+
+# Cleaning
+Filter out bad matches and select columns.
+
+```{r}
+offices <- 
+  offices[loctype == "rooftop" | type %notin% c("locality", "postal_code", "route"), 
+          .(name, state, date_closed, station, lon, lat, type, loctype, address)
+        ][!is.na(lon + lat)]
+```
+
+Manual fix for this terrible match:
+```{r}
+# offices[lon > -81 & state == "CA"]
+offices[name == "CULVER CITY CA", c("lat", "lon") := .(34.026724, -118.389915)]
+```
+
+Convert to data.frame, then sf. Otherwise splitting fails in next script
+Several sites state that Google Maps uses EPSG:3857.
+But the geoocoding API actually returns units in degrees lon, lat.
+This matches EPSG:4269, used by `tigris`.
+```{r}
+
+office_sf <- st_as_sf(as.data.frame(offices), coords = c("lon", "lat"),
+                      crs = 4269)
+```
+
+
+# Export
+```{r}
+saveRDS(office_sf, "data/offices_sf.rds")
+```
+

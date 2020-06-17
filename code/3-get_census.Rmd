@@ -1,0 +1,300 @@
+---
+title: "Download demographic predictors and ZCTA shapefile"
+author: 
+  - "Cole Tanigawa-Lau"
+date: ""
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  theme: paper
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 7, fig.height = 5)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r about, echo=FALSE, results = "asis"}
+cat(
+  sprintf("Updated: %s.", 
+          format(Sys.time(), "%b %d, %Y at %H:%M:%S", usetz = TRUE)),
+  sprintf("Working directory: `%s`.", getwd()),
+  sep = "\n\n"
+)
+```
+
+
+The code chunks were run interactively and are not evaluated when knitting the document.
+
+Reads:
+
+- None
+
+Writes:
+
+ - data/acs/*
+ - data/zcta_sf_raw.rds
+
+# Setup
+
+```{r packages, warning=FALSE, message=FALSE}
+rm(list = ls())
+
+
+library(parallel)
+library(coler)
+library(data.table)
+library(tigris)
+library(tidycensus)
+```
+
+```{r}
+# apis <- listCensusApis()
+# 
+# acsvars <- listCensusMetadata(name = "acs/acs5", vintage = "2009", type = "variables")
+# View(acsvars)
+```
+
+# Choose variables
+The 5-year ACS has nationwide coverage but starts in 2009.
+
+
+2018 variable codes: https://api.census.gov/data/2018/acs/acs5/variables.html
+
+2009 variable codes: https://api.census.gov/data/2009/acs/acs5/variables.html
+```
+B00001_001 # population count
+
+
+# nino: B26101_009  # 65-74
+# nino: B26101_010  # 74-85
+# nino: B26101_011  # 85+
+
+# from load_variables(2011, "acs5)
+B06001_011  # 65-74
+B06001_012  # 74-85
+
+B99163_004 # ability to speak english in population age 5+
+B10054_013  # speak english less than "very well"
+
+B02001_002  # total white alone
+B02001_003  # total black alone
+
+B28001_001 # number of computers in household
+B28001_011 # no computer
+B28002_013 # no internet access
+
+B06009_003 # total hs grads
+B06009_002 # total less than hs
+
+B07101_002 # non-movers
+
+B06011_001 # median income in past 12 months
+B19313_001 # aggregate income in past 12 months
+
+B16009_001 # total poverty status in past 12 months
+B06012_002 # total below 100% of poverty level
+B06012_003 # total between 100 and 149% of poverty level
+B10059_001 # total poverty status in past 12 months of childrearing grandparents
+B19057_001 # public assistance income in past 12 months
+B19055_001 # social security income in past 12 months
+```
+
+
+```{r}
+vars <- 
+  c("B00001_001", # population count
+    
+    "B06001_011",  # 65-74
+    "B06001_012",  # 74-85
+    
+    "B99163_004",  # ability to speak english in population age 5+ (imputed)
+    "B10054_013",  # speak english less than "very well"
+    
+    "B02001_002",  # total white alone
+    "B02001_003",  # total black alone
+    
+    "B06009_003", # total hs grads
+    "B06009_002", # total less than hs
+    
+    "B07101_002", # non-movers
+    
+    "B06011_001", # median income in past 12 months
+    "B19313_001", # aggregate income in past 12 months
+    
+    "B16009_001", # total poverty status in past 12 months
+    "B06012_002", # total below 100% of poverty level
+    "B06012_003", # total between 100 and 149% of poverty level
+    "B10059_001", # total poverty status in past 12 months of childrearing grandparents
+    "B19057_001", # public assistance income in past 12 months
+    "B19055_001"  # social security income in past 12 months
+  )
+
+compvars <- c("B28001_001", "B28001_011", "B28002_013")
+```
+
+```{r}
+data(fips_codes)
+setDT(fips_codes)
+
+fips_list <- split(fips_codes, fips_codes$state)
+```
+
+```{r}
+# Functions to download data on all census tracts for a given state-year.
+# Rather than return the data set, these functions save data to disk.
+# Not the most efficient, but good for monitoring progress and recovering from a failed download.
+
+
+## ACS 5-year
+acs_state <- function(state, county = NULL, geography, variables, year, geometry, ...) {
+  require(tidycensus)
+  require(data.table)
+  
+  state_acs <- 
+    get_acs(geography = geography, survey = "acs5", variables = variables, year = year,
+            state = state, county = county, geometry = geometry, ...)
+  
+  # Save immediately after downloading data in case some states fail
+  fn <- sprintf("data/acs/%s/%s_%s.rds", geography, state, year)
+  
+  saveRDS(state_acs, fn)
+  
+  # return(state_tracts)
+  rm(state_acs)
+  gc()
+}
+
+
+## CENSUS summary file 3
+
+sf3_state <- function(state, geography, variables, year = 2000, ...) {
+  require(tidycensus)
+  require(data.table)
+  
+  state_census <- 
+    get_decennial(geography = geography, survey = "sf3", variables = variables, year = year,
+                  state = state, ...)
+  
+  # Save immediately after downloading data in case some states fail
+  fn <- sprintf("data/census/%s/%s_%s.rds", geography, state, year)
+  saveRDS(state_census, fn)
+  
+  # return(state_census)
+}
+
+```
+
+# ACS data
+4x speed up from running in parallel. Should take a little more than a minute. For some reason, I can't grab the shapefiles at the same time.
+```{r tract_par, eval = FALSE}
+# options(tigris_use_cache = TRUE)
+
+map(2010:2015,
+    ~ mclapply(fips_codes$state, 
+         function(st) acs_state(state = st, geography = "tract", year = .x, 
+                                variables = vars, geometry = FALSE), 
+         mc.cores = 10)
+)
+
+# Download computer variables from 2017 (first year available) 
+# with the shapefile attached
+
+lapply(fips_codes$state, 
+         function(.x) acs_state(state = .x, geography = "tract", year = 2017, 
+                                variables = compvars, geometry = TRUE, 
+                                output = "wide"))
+
+# options(tigris_use_cache = FALSE)
+```
+
+
+```{r}
+tract_fn <- list.files("data/acs/tract", pattern = "^[A-Z]{2}_", full = TRUE)
+
+tract_ldf <- mclapply(tract_fn, readRDS)
+
+names(tract_ldf) <- str_extract(tract_fn, "[A-Z_0-9]*(?=\\.rds)")
+
+state_acs10_15 <- rbindlist(tract_ldf[grep("2017", names(tract_ldf), invert = TRUE)], 
+                            idcol = "tag", fill = TRUE)
+
+state_acs10_15[ , `:=`(year = str_extract(tag, "\\d{4}"),
+                       state = str_extract(tag, "[A-Z]{2}"),
+                       tag  = NULL)]
+
+saveRDS(state_acs10_15, "data/acs/alltracts10-15_lng.rds")
+```
+
+
+Don't know why, but some states had tracts saved as POLYGONS. Need to coerce to MULTIPOLYGONS before binding into a single `sf`.
+```{r}
+ldf17 <- tract_ldf[grep("2017", names(tract_ldf))]
+rm(tract_ldf)
+
+poly_ind <- 
+  map(ldf17, "geometry") %>% 
+  map(class) %>% map( ~ "sfc_POLYGON" %in% .x) %>%
+  unlist() %>% which()
+
+ldf17[poly_ind] <- map(ldf17[poly_ind], sf::st_cast, to = "MULTIPOLYGON")
+
+state_acs17 <- rbindlist(ldf17, idcol = "tag", fill = TRUE)
+
+state_acs17[ , `:=`(year = str_extract(tag, "\\d{4}"),
+                    state = str_extract(tag, "[A-Z]{2}"),
+                    tag  = NULL)]
+
+as.data.frame(state_acs17) %>% sf::st_as_sf() %>% 
+  saveRDS("data/acs/alltracts17.rds")
+```
+
+
+# Decennial census data
+
+```{r}
+# sf1
+# male 65+, sf1: P012020, P012021, P012022, P012023, P012024, P012025,
+# female 65+, sf1: P012044, P012045, P012046, P012047, P012048, P012049,
+
+
+census_vars <- 
+  c(
+    "P001001", # population total
+    "P006002", # white alone
+    "P006003", # black alone
+    
+    "P039008", # male 65+
+    "P039019", # female 65+
+    
+    "P037011", # male HS grads
+    "P037028", # female HS grads
+    
+    "P110004", # ability to speak english
+    
+    "P087002", # total poverty
+    "P054001", # aggregate hh income
+    
+    "P062002", # SS count
+    "P071001", # SS income
+    "P073001" # public assistance income
+  )
+
+
+```
+
+```{r eval = FALSE}
+system.time(
+  mclapply(fips_codes$state,
+           function(st) sf3_state(state = st, geography = "tract", year = 2000, 
+                                  variables = census_vars),
+           mc.cores = 10
+  )
+)
+```
+
