@@ -116,16 +116,18 @@ Steps to link offices to their service areas:
 states_sf <- 
   tigris::states(cb = TRUE, class = "sf")
 
+uniq_states <- unique(offices$state) %>% sort()
+
 # Transform to projected CRS for st_intersection
-states_sfl <- split(states_sf %>% st_transform(3857), states_sf$STUSPS)[offices$state]
-off_sfl    <- split(offices %>% st_transform(3857), offices$state)[offices$state]
+states_sfl <- split(states_sf %>% st_transform(3857), states_sf$STUSPS)[uniq_states]
+off_sfl    <- split(offices %>% st_transform(3857), offices$state)[uniq_states]
 ```
 
 Envelope removes some outlying points, probably bad (OOS) locations from geocoding. Need to use a spatial intersection to link back to offices.
 
 ```{r messages = FALSE, warning = FALSE}
 state_vorl <- 
-  purrr::map(unique(offices$state),
+  purrr::map(uniq_states,
       ~ st_voronoi(off_sfl[[.x]] %>% st_combine(), 
                    envelope = states_sfl[[.x]] %>% st_combine()) %>%
         st_cast() %>% 
@@ -170,8 +172,6 @@ set.seed(575)
 
 
 ```{r message = FALSE, warning = FALSE}
-states <- names(states_sfl)
-
 # system.time(
 #   yr_test <- 
 #     Map(tessalate, office_sf = off_sfl[states], area_sf = states_sfl[states],
@@ -187,7 +187,7 @@ system.time(
   parallel::mclapply(dates, 
                      function(.x)
                        Map(tessalate, 
-                           office_sf = off_sfl[states], area_sf = states_sfl[states],
+                           office_sf = off_sfl[uniq_states], area_sf = states_sfl[uniq_states],
                            date = .x) %>% bind_rows(),
                      mc.cores = 6)
   )
