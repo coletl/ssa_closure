@@ -171,3 +171,25 @@ office_sf <- st_as_sf(as.data.frame(offices), coords = c("lon", "lat"),
 saveRDS(office_sf, "data/offices_sf.rds")
 ```
 
+Store a longitudinal data set marking office closures
+```{r}
+closeyr <- data.table(filter(office_sf, !is.na(date_closed)) %>% st_drop_geometry())
+
+closeyr[ , year := lubridate::year(date_closed)]
+
+closure <- expand.grid(year = 2000:2015, name = office_sf$name)
+setDT(closure, key = c("year", "name"))
+
+closure[closeyr,
+        closed := 1, on = c("year", "name")]
+
+closure[is.na(closed), closed := 0]
+sum(closure$closed)
+```
+
+```{r}
+saveRDS(closure, "data/office_closures.rds")
+```
+
+
+
