@@ -38,7 +38,9 @@ Reads:
 Writes:
 
  - data/acs/*
- - data/zcta_sf_raw.rds
+ - data/acs/alltracts17.rds
+ - data/acs/alltracts10-15_lng.rds
+ - data/census00_lng.rds
 
 # Setup
 
@@ -112,6 +114,7 @@ vars <-
     
     "B06001_011",  # 65-74
     "B06001_012",  # 74-85
+    "B06001_013",  # 86+
     
     "B99163_004",  # ability to speak english in population age 5+ (imputed)
     "B10054_013",  # speak english less than "very well"
@@ -142,7 +145,9 @@ compvars <- c("B28001_001", "B28001_011", "B28002_013")
 data(fips_codes)
 setDT(fips_codes)
 
-fips_list <- split(fips_codes, fips_codes$state)
+uniq_state <- unique(fips_codes$state)
+
+fips_list <- split(fips_codes, uniq_state)
 ```
 
 ```{r}
@@ -182,7 +187,7 @@ sf3_state <- function(state, geography, variables, year = 2000, ...) {
                   state = state, ...)
   
   # Save immediately after downloading data in case some states fail
-  fn <- sprintf("data/census/%s/%s_%s.rds", geography, state, year)
+  fn <- sprintf("data/census/%s_%s.rds", state, year)
   saveRDS(state_census, fn)
   
   # return(state_census)
@@ -191,26 +196,33 @@ sf3_state <- function(state, geography, variables, year = 2000, ...) {
 ```
 
 # ACS data
-4x speed up from running in parallel. Should take a little more than a minute. For some reason, I can't grab the shapefiles at the same time.
-```{r tract_par, eval = FALSE}
-# options(tigris_use_cache = TRUE)
-
-map(2010:2015,
-    ~ mclapply(fips_codes$state, 
-         function(st) acs_state(state = st, geography = "tract", year = .x, 
-                                variables = vars, geometry = FALSE), 
-         mc.cores = 10)
+4x speed up from running in parallel. For some reason, I can't grab the shapefiles at the same time.
+```{r tract_par, eval = TRUE}
+system.time(
+  # For each year
+  map(2010:2015,
+      # download data for all states
+      ~ mclapply(uniq_state,
+                 function(st) acs_state(state = st, year = .x, geography = "tract",
+                                        variables = vars, geometry = FALSE),
+                 mc.cores = 10
+      ),
+  )
 )
 
+```
+
+
+```{r tract17, eval = TRUE}
 # Download computer variables from 2017 (first year available) 
 # with the shapefile attached
 
-lapply(fips_codes$state, 
+# No data on territories
+lapply(head(uniq_state, -6), 
          function(.x) acs_state(state = .x, geography = "tract", year = 2017, 
                                 variables = compvars, geometry = TRUE, 
-                                output = "wide"))
-
-# options(tigris_use_cache = FALSE)
+                                output = "wide")) %>% 
+  system.time()
 ```
 
 
@@ -288,13 +300,31 @@ census_vars <-
 
 ```
 
-```{r eval = FALSE}
+```{r eval = TRUE}
 system.time(
-  mclapply(fips_codes$state,
+  mclapply(uniq_state,
            function(st) sf3_state(state = st, geography = "tract", year = 2000, 
                                   variables = census_vars),
            mc.cores = 10
   )
 )
 ```
+
+```{r}
+census_fn <- list.files("data/census", pattern = "^[A-Z]{2}_", full = TRUE)
+
+census_ldf <- mclapply(census_fn, readRDS)
+
+names(census_ldf) <- str_extract(census_fn, "[A-Z_0-9]*(?=\\.rds)")
+
+census00 <- rbindlist(census_ldf[grep("2017", names(census_ldf), invert = TRUE)], 
+                      idcol = "tag", fill = TRUE)
+
+census00[ , `:=`(year = str_extract(tag, "\\d{4}"),
+                       state = str_extract(tag, "[A-Z]{2}"),
+                       tag  = NULL)]
+
+saveRDS(census00, "data/census00_lng.rds")
+```
+
 
