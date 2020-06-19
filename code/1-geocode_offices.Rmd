@@ -160,18 +160,16 @@ Several sites state that Google Maps uses EPSG:3857.
 But the geoocoding API actually returns units in degrees lon, lat.
 This matches EPSG:4269, used by `tigris`.
 ```{r}
-
 office_sf <- st_as_sf(as.data.frame(offices), coords = c("lon", "lat"),
                       crs = 4269)
+
+nn_list <- 
+  split(office_sf, office_sf$state) %>% 
+  map(~ nngeo::st_nn(.x, .x))
+
+office_sf$nn_dist <- unlist(nn_list)
 ```
-
-
-# Export
-```{r}
-saveRDS(office_sf, "data/offices_sf.rds")
-```
-
-Store a longitudinal data set marking office closures
+# Longitudinal data set marking office closures
 ```{r}
 closeyr <- data.table(filter(office_sf, !is.na(date_closed)) %>% st_drop_geometry())
 
@@ -182,13 +180,31 @@ setDT(closure, key = c("year", "name"))
 
 closure[closeyr,
         closed := 1, on = c("year", "name")]
-
 closure[is.na(closed), closed := 0]
 sum(closure$closed)
 ```
 
+Merge in the nearest neighbor distances.
 ```{r}
-saveRDS(closure, "data/office_closures.rds")
+office_sf %>% as.data.table() %>% 
+  closure[., 
+          nn_dist := i.nn_dist,
+          on = "name"
+  ]
+
+
+closure[ , year := as.character(year)]
+```
+
+# Export
+```{r}
+saveRDS(office_sf, "data/offices_sf.rds")
+```
+
+
+```{r}
+closure %>% rename(office = "name") %>% 
+  saveRDS("data/office_closures.rds")
 ```
 
 
