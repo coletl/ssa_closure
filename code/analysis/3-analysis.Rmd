@@ -1,15 +1,14 @@
 ---
 title: "Descriptive analysis"
-author: 
-  - "Cole Tanigawa-Lau"
-date: ""
+author: "Cole Tanigawa-Lau"
+date: ''
 output:
   html_document:
+    theme: paper
     df_print: paged
     toc: yes
     toc_depth: 3
     toc_float: yes
-  theme: paper
 editor_options:
   chunk_output_type: inline
 ---
@@ -40,13 +39,12 @@ Writes:
 # Setup
 
 ```{r packages, warning=FALSE, message=FALSE}
-rm(list = ls())
-
 library(coler)
 library(dplyr)
 library(data.table)
 library(caret)
 library(randomForest)
+
 ```
 
 ```{r final prep, child = "0-final_prep.Rmd"}
@@ -54,8 +52,39 @@ stopifnot(exists("absolute"))
 ```
 
 ```{r}
-model <- readRDS("data/mod_RF_absolute.rds")
 models <- readRDS("data/fitted_models.rds")
+```
+
+
+# Balance
+```{r}
+cobalt::bal.tab(absolute[ , ..vars_absolute], treatment = absolute$closed)
+
+baltests <- absolute[ , map(.SD, ~ t.test(.x ~ closed, .SD) %>% list()), 
+                      .SDcols = vars_absolute]
+
+balDT <- 
+  map(baltests, ~ .x[[1]] %>% broom::tidy()) %>% 
+  rbindlist(idcol = "variable")
+
+# estimate: estimate1 - estimate2 = treatment - control
+setnames(balDT, c("estimate1", "estimate2"), c("mean_closed", "mean_open"))
+```
+
+
+```{r results = "asis"}
+round_num <- function(data, func = round, digits = 3){
+  num_test <- vapply(data, is.numeric, logical(1))
+  num_cols <- names(which(num_test))
+  
+  out <- dplyr::mutate_at(data, num_cols, func, digits = digits)
+  
+  return(out)
+}
+
+balDT[order(-abs(statistic))] %>% 
+  round_num(func = signif, digits = 3) %>% 
+  knitr::kable()
 ```
 
 
@@ -68,8 +97,21 @@ absolute[ , confusionMatrix(kluster, reference = closed, positive = "1")]
 ```
 
 # Logit
+## Coefficients
+### Fit model on standardized data
 ```{r}
-summary(models$logit.absolute)
+absolute_std <- copy(absolute)
+set_cols(absolute_std, j = vars_absolute, FUN = scale)
+
+models$logit.absolute.std <- 
+  glm(formula = form_absolute, family = binomial(link = "logit"), 
+      data = absolute_std)
+```
+
+
+```{r results = "asis"}
+stargazer::stargazer(models$logit.absolute, models$logit.absolute.std,
+                     type = "html", column.labels = c("raw", "standardized"))
 ```
 
 ## Confusion matrix: fitted values
@@ -89,8 +131,11 @@ confusionMatrix(
 # Random forest
 
 ```{r}
-models$RF.absolute
+models$RF.absolute$importance %>% 
+  as_tibble(rownames = "variable") %>% 
+  arrange(-MeanDecreaseAccuracy)
 ```
+
 
 ## Confusion matrix
 ### Fitted values
@@ -114,14 +159,13 @@ confusionMatrix(models$RF.absolute$predicted,
   positive = "1")
 ```
 
+# Out-of-sample prediction
+Terrible. Zero true positives.
 
 ```{r eval = FALSE, include = FALSE}
 set.seed(575)
 test <- sample_frac(absolute, 0.20)
 train <- setdiff(absolute, test)
-
-# RFtrain <- randomForest(x = train[ , ..vars_absolute],
-#                         y = train[ , closed], mtry = 5)
 ```
 
 ```{r eval = FALSE, include = FALSE}
@@ -137,11 +181,7 @@ predict(logit, newdata = test, type = "response") %>%
                                  {as.numeric(. > 0.5)} %>% table()
 ```
 
-
-
 ```{r eval = FALSE, include = FALSE}
-# OUT OF SAMPLE PREDICTION IS TERRIBLE, NO TRUE POSITIVES
-
 mtries <- 3:8
 mods <- 
   parallel::mclapply(mtries,
