@@ -57,7 +57,7 @@ vars_absolute <-
     "pop",
     "nn_dist")
 
-form_absolute <- sprintf("closed ~ %s", paste(vars_absolute, collapse = " + "))
+form_absolute <- reformulate(termlabels = vars_absolute, response = "closed")
 ```
 
 
@@ -82,8 +82,7 @@ setnames(percap,
 vars_percap <- paste0("prop_", setdiff(vars_absolute, vars_nopc)) %>%
   c("pop")
 
-form_percap <- sprintf("closed ~ %s",
-                       paste(vars_percap, collapse = " + "))
+form_percap <- reformulate(termlabels = vars_percap, response = "closed")
 
 
 ```

@@ -2786,8 +2786,9 @@ div.tocify {
 </div>
 
 
-<p>Updated: Jun 19, 2020 at 21:04:19 +04.</p>
+<p>Updated: Jun 19, 2020 at 23:46:46 +04.</p>
 <p>Working directory: <code>/home/ctl277/Dropbox/ssa_closure</code>.</p>
+<p>This script trains models on the raw and augmented data. I report confusion matrices of fitted vs. observed values (dichotomized for logit). For model predictions on raw data, see the next script.</p>
 <p>Reads:</p>
 <ul>
 <li>data/demograph_service.rds</li>
@@ -2845,7 +2846,7 @@ vars_absolute &lt;-
     &quot;pop&quot;,
     &quot;nn_dist&quot;)
 
-form_absolute &lt;- sprintf(&quot;closed ~ %s&quot;, paste(vars_absolute, collapse = &quot; + &quot;))</code></pre>
+form_absolute &lt;- reformulate(termlabels = vars_absolute, response = &quot;closed&quot;)</code></pre>
 <pre class="r"><code>percap &lt;- copy(offcompl)
 
 
@@ -2862,8 +2863,7 @@ setnames(percap,
 <pre class="r"><code>vars_percap &lt;- paste0(&quot;prop_&quot;, setdiff(vars_absolute, vars_nopc)) %&gt;%
   c(&quot;pop&quot;)
 
-form_percap &lt;- sprintf(&quot;closed ~ %s&quot;,
-                       paste(vars_percap, collapse = &quot; + &quot;))</code></pre>
+form_percap &lt;- reformulate(termlabels = vars_percap, response = &quot;closed&quot;)</code></pre>
 <p>Some places actually had zero population (interpolated from census tracts).</p>
 <pre class="r"><code>percap &lt;- percap[pop &gt; 0]</code></pre>
 <p>Model formula for absolute and per-capita predictors.</p>
