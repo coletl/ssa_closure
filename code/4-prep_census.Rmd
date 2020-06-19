@@ -1,5 +1,5 @@
 ---
-title: "Prepare Census data"
+title: "Preprocess Census data: Reshaping and interpolation"
 author: 
   - "Cole Tanigawa-Lau"
 date: ""
@@ -29,9 +29,7 @@ cat(
 ```
 
 
-This script prepares the Census demographics for spatial joins with the annual service areas.
-
-Compare linear interpolation between 5-year periods [interp(acs11, acs16)] to yearly ACS [acs11, acs12, acs13, etc.].
+This script prepares the Census demographics and joins it with annual service areas by spatial interpolation.
 
 
 Reads:
@@ -61,36 +59,50 @@ Variable info:
 ```{r}
 var_dict <- 
   dplyr::tribble(~ variable,  ~ label, ~ descrip,
-                 "B01001_001", "pop","population count",
-                 
-                 "B00001_001", "seniors","population 65+",
-                 
-                 "B99163_004", "english_imp","ability to speak english in population age 5+ (imputed)",
-                 "B99163_005", "english","ability to speak english in population age 5+",
-                 
-                 "B06007_008", "less_english","speak english less than very well",
-                 
-                 "B25006_002", "white","householder who is white alone",
-                 
-                 "B28001_001", "computers","number of computers in household",
-                 "B28001_011", "no_comp","no computer",
-                 "B28002_013", "no_internet","no internet access",
-                 
-                 "B99151_001", "educ","educational attainment total",
-                 "B99151_002", "educ_imp","educational attainment total imputed",
-                 "B99151_003", "educ_noimp","educational attainment total not imputed",
-                 
-                 "B10052_001", "disabl_grand", "disability status of grandparents",
-                 
-                 
-                 "B10052_001", "income_hh", "household income in past 12 months",
-                 "B06011_001", "income_med", "median income in past 12 months",
-                 "B16009_001", "poverty", "total poverty status in past 12 months",
-                 "B10059_001", "poverty_grand", "total poverty status in past 12 months of childrearing grandparents",
-                 
-                 "B19057_001", "income_publ","public assistance income in past 12 months",
-                 "B19055_001", "income_ss","social security income in past 12 months"
-  )
+               
+               "B00001_001",  "pop",  "population count",
+               
+               "B06001_011",  "age6574",  "65-74",
+               "B06001_012",  "age7485",  "74-85",
+               "B06001_013",  "age86p",  "86+",
+               
+               "B99163_004",  "english_imp",  "ability to speak english in population age 5+ (imputed)",
+               "B10054_013",  "english_lessvw",  "speak english less than very well",
+               
+               "B02001_002",  "white",  "total white alone",
+               "B02001_003",  "black",  "total black alone",
+               
+               "B06009_003",  "educ_hsgrad",  "total hs grads",
+               "B06009_002",  "educ_hsless",  "total less than hs",
+               
+               "B07101_002",  "nonmovers",  "non-movers",
+               
+               "B06011_001",  "income_med",  "median income in past 12 months",
+               "B19313_001",  "income",  "aggregate income in past 12 months",
+               "B19057_001",  "income_publass",  "public assistance income in past 12 months",
+               "B19055_001",   "income_ss",  "social security income in past 12 months",
+               
+               "B16009_001",  "poverty",  "total poverty status in past 12 months",
+               "B06012_002",  "poverty100m",  "total below 100% of poverty level",
+               "B06012_003",  "poverty100150",  "total between 100 and 149% of poverty level",
+               "B10059_001",  "poverty_grand",  "total poverty status in past 12 months of childrearing grandparents",
+               
+               
+               ################# CENSUS ####################
+               "P001001", "pop", "population total",
+               "P006002", "white", "white alone",
+               "P006003", "black", "black alone",
+               "P039008", "male65p", "male 65+",
+               "P039019", "female65p", "female 65+",
+               "P037011", "educ_hsgrad_male", "male HS grads",
+               "P037028", "educ_hsgrad_female", "female HS grads",
+               "P110004", "english_imp", "ability to speak english",
+               "P087002", "poverty", "total poverty",
+               "P054001", "income", "aggregate hh income",
+               "P071001", "income_ss", "SS income",
+               "P073001", "income_publass", "public assistance income",
+               "P062002", "indv_ss", "SS count"
+               )
 ```
 
 
@@ -98,19 +110,17 @@ var_dict <-
 
 ## ACS variables
 
-```{r}
+```{r reshape 10-15}
 tract_lng <- readRDS("data/acs/alltracts10-15_lng.rds") %>% 
   left_join(var_dict, by = "variable")
 
 
 tract <- 
   dcast(tract_lng[ , .(year, GEOID, label, estimate)], 
-        year + GEOID ~ label, value.var = "estimate"
-  )[ , 
-     .(year, geoid = GEOID, 
-       pop, educ, income_med, income_ss, poverty, poverty_grand,
-       english, seniors, white)
-  ]
+        year + GEOID ~ label, value.var = "estimate")
+
+tract[ , seniors := age6574 + age7485 + age86p
+       ][ , c("age6574", "age7485", "age86p") := NULL]
 
 ```
 
@@ -119,31 +129,112 @@ tract <-
 ## 2000 census
 
 ACS 5-year survey (only one with nationwide coverage) didn't come out until 2010/2011. I need to add the 2000 census data and interpolate for years 2001-2010.
+```{r preprocess 00}
+tract00_lng <- readRDS("data/census00_lng.rds") %>% 
+  left_join(var_dict, by = "variable")
+
+tract00 <- 
+  dcast(tract00_lng[ , .(year, GEOID, label, value)], 
+        year + GEOID ~ label, value.var = "value")
+
+tract00[ , seniors := male65p + female65p
+         ][ ,
+            "educ_hsgrad" := educ_hsgrad_male + educ_hsgrad_female
+            ]
+
+tract00[ , 
+         c("male65p", "female65p", "educ_hsgrad_male", "educ_hsgrad_female") :=
+           NULL]
+```
+
 ```{r}
-# tract10 <- 
+# Preserves column types
+dummy <- copy(tract00)
+dummy_geo <- dummy$GEOID
+dummy[ ] <- NA
+
+dummy[ , GEOID := dummy_geo]
+
+tract_meat <-
+  map(2001:2009, ~ mutate(dummy, year = as.character(.x))) %>% 
+  rbindlist()
 ```
 
 
-Pivot to wide format to match `sf` object.
 ```{r}
+# Find variables that are contained in both Census and ACS data
+tract_bread <- rbind(tract00, tract, fill = TRUE)
+complete_vars <- intersect(names(tract00), names(tract))
+
+# Sandwich the interpolation dummy rows
+tract_full <- bind_rows(tract00[ , ..complete_vars],
+                        tract_meat[ , ..complete_vars],
+                        tract[ , ..complete_vars])
+
+
+tract_full[ , stfips := str_extract(GEOID, "\\d{2}")]
+```
+
+Interpolation between 2000 and 2010 using the `baytrends` package.
+```{r}
+time_interp_vars <- setdiff(complete_vars, c("year", "GEOID"))
+
+setorder(tract_full, GEOID, year)
+
+system.time(
+  tract_full[ , 
+              
+              (time_interp_vars) := lapply(.SD, baytrends::fillMissing),
+              
+              by = GEOID,
+              .SDcols = time_interp_vars
+              ]
+)
+
+#   user  system elapsed 
+# 45.514   0.109  45.351 
+
+#    user  system elapsed 
+# 107.247   1.723 108.675 
+```
+
+
+Still have NA values in `tract_wide` where 2010 tracts did not match to a 2000 tract or vice versa. Tracts are added and removed according to population changes. See [documentation here](https://www2.census.gov/geo/pdfs/education/CensusTracts.pdf), particularly pages 8-13.
+```{r}
+tract_full[is.na(black)]$year %>% unique()
+lapply(tract_full, prop_na) %>% bind_rows()
+
+## Example of GEOID missing from 2000 census data
+# tract00[GEOID == "01001020801"]
+
+## Example of GEOID missing after 2000 census
+# tract[GEOID == "04001940100"]
+```
+
+Pivot to wide format to match `sf` object.
+```{r wide for sf}
 tract_wide <- 
-  pivot_wider(tract, id_cols = geoid, names_from = year,
-              values_from = setdiff(names(tract), c("geoid", "year")))
+  pivot_wider(tract_full, id_cols = GEOID, names_from = year,
+              values_from = setdiff(complete_vars, c("year", "GEOID")))
+
+lapply(tract_wide, prop_na) %>% bind_rows()
+
+tract_wide %>% filter(substr(GEOID, 1, 2) == "04")
 ```
 
 ## 2017 computer variables
 
 Merge with 2017 computer variables for every year. This data set contains the `sf` object that I need for spatial interpolation below.
 
-```{r}
+```{r read compvars17}
 tract17 <- readRDS("data/acs/alltracts17.rds") %>% 
-  dplyr::select(geoid = GEOID, state, 
+  dplyr::select(GEOID, state, 
                 total_comp = B28001_001E, no_comp = B28001_011E, 
                 total_internet = B28002_013E)
 ```
 
-```{r}
-tract_sf <- left_join(x = tract17, y = tract_wide, by = "geoid") %>% 
+```{r join to sf}
+tract_sf <- left_join(x = tract17, y = tract_wide, by = "GEOID") %>% 
   st_transform(st_crs(3857))
 ```
 
@@ -156,7 +247,30 @@ For a given state,
   2) Compute areal-weighted interpolation from each year's ACS variables to that year's service area
   3) Produce a data set of demographics at the office-year level with stationary computer variables from 2017
 
+
+
+## Spatial interpolation setup
+
+Since `st_interpolate_aw()` lacks an `na.rm` parameter, we need to replace NA values with something. These are extensive variables, so I'll replace with 0. See discussion at https://github.com/r-spatial/sf/issues/830.
+
+During interpolation, `nafill` column should count the tracts in which I've replaced some missing value with 0. Remember to check this against `num_tracts` later.
+
 ```{r}
+num_cols <- sapply(tract_sf, is.numeric) %>% which() %>% 
+  names()
+
+tract_sf$num_tracts <- 1
+
+tract_sf$nafill <- 
+  dplyr::select(tract_sf, all_of(num_cols)) %>% st_drop_geometry() %>% 
+  {!complete.cases(.)} %>% as.numeric()
+
+
+setnafill(tract_sf, type = "const", fill = 0, cols = num_cols)
+```
+
+
+```{r list setup}
 tract_sfl <- split(tract_sf, tract_sf$state)
 
 serv_sfl <- 
@@ -166,40 +280,80 @@ serv_sfl <-
 names(serv_sfl) <- 
   map(serv_sfl, "state") %>% 
   sapply(unique)
-```
 
-Prepare for interplation, reduce workspace RAM usage.
-```{r}
 interp_fn <- "data/sf_interp/%s.rds"
-tract_sfl_select <- map(tract_sfl, ~ dplyr::select(.x, matches("_20|comp|internet")))
-
-rm(tract, tract17, tract_sf, tract_lng, tract_wide, tract_sfl)
-gc()
+tract_sfl_select <- 
+  map(tract_sfl, ~ dplyr::select(.x, matches("_20|comp|internet")))
 ```
 
 
-Don't evaluate this chunk when knitting. It takes a very long time. For some reason, this failes on the polisci server, so I ran it on KBLY.
+<!-- Don't evaluate this chunk when knitting. It takes a very long time.  -->
+<!-- For some reason, this fails on the polisci server, so I ran it on KBLY. -->
 
-```{r eval = FALSE}
+## Run spatial interpolation
+
+```{r interpolation, eval = TRUE}
 system.time(
   parallel::mclapply(names(tract_sfl_select), 
                      function(st){
-                       interp <-
-                         st_interpolate_aw(tract_sfl_select[[st]], 
-                                           to = serv_sfl[[st]], 
-                                           extensive = TRUE)
                        
-                       out <- bind_cols(interp, serv_sfl[[st]] %>% 
-                                          st_drop_geometry())
+                       # Split service areas by year
+                       interp_yrl <- split(serv_sfl[[st]], serv_sfl[[st]]$year)
                        
+                       # Run interpolation separately for each year
+                       for(yr in as.character(2000:2015)){
+                         
+                         # Subset to this year's service area
+                         sa_sf <- filter(serv_sfl[[st]], year == yr)
+                         
+                         # Subset to this year's demographics and rename columns
+                         demog_sf <- 
+                           dplyr::select(tract_sfl_select[[st]], matches(yr)) %>% 
+                           
+                           rename_with(~ gsub(paste0("_", yr), "", .x))
+                         
+                         # Interpolate
+                         interp <- st_interpolate_aw(demog_sf, to = sa_sf, extensive = TRUE)
+                         
+                         # Re-link with service areas
+                         # Group.1 refers to the row number in `to` (above) 
+                         # to which the interpolation corresponds. This fixes
+                         # errors in AZ and FL.
+                         interp2 <- 
+                           sa_sf[interp$Group.1, ] %>% 
+                           st_drop_geometry() %>% 
+                           bind_cols(interp)
+                         
+                         # Store in output list
+                         interp_yrl[[yr]] <- interp2
+                         
+                       }
+                       
+                       
+                       out <- bind_rows(interp_yrl)
                        # return(out)
                        saveRDS(out, sprintf(interp_fn, st))
                        
-                     }, mc.cores = 2, mc.preschedule = FALSE
+                     }, mc.cores = 5, mc.preschedule = FALSE
   )
 )
 
-# AK and AL in series
-## user  system elapsed 
-## 406.180   8.572 413.655 
+# user  system elapsed 
+# 793.166  36.290 197.002 
+#    user  system elapsed 
+# 832.362  62.149 207.942 
 ```
+
+
+
+# Export
+```{r export}
+interp_files <- list.files("data/sf_interp", full = TRUE)
+interp <- lapply(interp_files, readRDS) %>% bind_rows()
+
+interp <- dplyr::select(interp, state, year, office, everything(), -geometry)
+
+saveRDS(interp, "data/demograph_service.rds")
+```
+
+
