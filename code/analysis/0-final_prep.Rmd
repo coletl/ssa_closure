@@ -1,0 +1,94 @@
+# Final data prep
+```{r}
+rm(list = ls())
+```
+
+
+```{r sub setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 7, fig.height = 5)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+Cutoff function.
+```{r}
+cutoff <- 
+  function(x, threshold = 0.5, levels = 0:1) 
+    factor(as.numeric(as.character(x) > threshold), levels = levels)
+
+```
+
+Load data.
+```{r}
+demog <- readRDS("data/demograph_service.rds") %>% as.data.table() 
+closure <- readRDS("data/office_closures.rds") %>% as.data.table()
+```
+
+Merge.
+```{r}
+offices <- merge(closure, demog, all = TRUE, by = c("office", "year"))
+```
+
+Subset to complete observations.
+```{r}
+offcompl <- offices[complete.cases(offices)]
+
+offcompl[ , .(closures = sum(closed), 
+              still_open = .N - sum(closed)),
+          by = year]
+```
+
+
+Change outcome to factor for classification trees.
+```{r}
+# Remove 2015 data since the closure data apparently run through 2014, despite
+# the SSA stating the data come from 2016
+offcompl <- offcompl[year %in% as.character(2000:2014)]
+offcompl$closed <- as.factor(offcompl$closed)
+```
+
+Test with two data sets: per capita and absolute values. I redefine here.
+
+```{r}
+absolute <- offcompl
+
+vars_absolute <- 
+  c("white", "black", "english_imp", "income", "income_publass",
+    "income_ss", "poverty", "seniors", "educ_hsgrad", 
+    "pop",
+    "nn_dist")
+
+form_absolute <- sprintf("closed ~ %s", paste(vars_absolute, collapse = " + "))
+```
+
+
+```{r}
+percap <- copy(offcompl)
+
+
+# Variables not to divide by population
+vars_nopc <- c("pop", "nn_dist")
+
+
+set_cols(percap, j = setdiff(vars_absolute, vars_nopc), 
+         FUN = function(x) x / percap[["pop"]])
+
+setnames(percap, 
+         setdiff(vars_absolute, vars_nopc), 
+         paste0("prop_", setdiff(vars_absolute, vars_nopc)))
+```
+
+
+```{r}
+vars_percap <- paste0("prop_", setdiff(vars_absolute, vars_nopc)) %>%
+  c("pop")
+
+form_percap <- sprintf("closed ~ %s",
+                       paste(vars_percap, collapse = " + "))
+
+
+```
+
+Some places actually had zero population (interpolated from census tracts).
+```{r}
+percap <- percap[pop > 0]
+```

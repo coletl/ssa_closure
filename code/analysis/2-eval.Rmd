@@ -1,0 +1,198 @@
+---
+title: "Evaluate models on true sample"
+author: 
+  - "Cole Tanigawa-Lau"
+date: ""
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  theme: paper
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 7, fig.height = 5)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r about, echo=FALSE, results = "asis"}
+cat(
+  sprintf("Updated: %s.", 
+          format(Sys.time(), "%b %d, %Y at %H:%M:%S", usetz = TRUE)),
+  sprintf("Working directory: `%s`.", getwd()),
+  sep = "\n\n"
+)
+```
+
+
+Based on these results, I'd say that the random forest consistently out-performed logistic regression. Up-sampling reduces false negatives and increases false positives. I'll proceed with the random forest model fit to the original absolute (not per-capita) data. This involves the least amount of transformation/augmentation.
+
+
+Reads:
+
+  - code/analysis/0-final_prep.Rmd
+  - data/fitted_models.rds
+
+Writes:
+
+  - data/mod_RF_absolute.rds
+
+# Setup
+
+```{r packages, warning=FALSE, message=FALSE}
+library(coler)
+library(dplyr)
+library(data.table)
+library(randomForest)
+
+library(caret)
+library(kableExtra)
+library(ggplot2)
+```
+
+
+<!-- Go to final_prep script and Run All interactively -->
+```{r final prep, child = "0-final_prep.Rmd"}
+stopifnot(exists("absolute"))
+```
+
+```{r}
+models <- readRDS("data/fitted_models.rds")
+
+mods_percap <- models[grep("percap", names(models))]
+mods_absolute <- models[grep("absolute", names(models))]
+```
+Predict on true sample.
+
+```{r predict}
+percap[ , names(mods_percap) := lapply(mods_percap, predict, newdata = percap, 
+                                       type = "response")]
+absolute[ , names(mods_absolute) := lapply(mods_absolute, predict, newdata = absolute,
+                                           type = "response")]
+```
+
+Change logit predictions to classifications
+```{r}
+set_cols(percap, FUN = cutoff, j = grep("logit", names(percap), value = TRUE))
+set_cols(absolute, FUN = cutoff, j = grep("logit", names(absolute), value = TRUE))
+```
+
+
+<!-- # ROC Plots -->
+
+<!-- Remove predictors from data sets. We just need predictions and true values here. -->
+<!-- ```{r} -->
+<!-- absolute <- dplyr::select(absolute, closed, matches("\\.absolute")) -->
+<!-- percap   <- dplyr::select(percap, closed, matches("\\.percap")) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- absolute_lng <-  -->
+<!--   melt(absolute, id.vars = "closed",  -->
+<!--        measure.vars = patterns("\\."),  -->
+<!--        variable.name = "model", value.name = "prediction") -->
+
+<!-- percap_lng <-  -->
+<!--   melt(percap, id.vars = "closed",  -->
+<!--        measure.vars = patterns("\\."),  -->
+<!--        variable.name = "model", value.name = "prediction") -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- ggplot(absolute_lng, aes(x = closed, y = prediction)) + -->
+<!--   geom_roc() +  -->
+<!--   facet_wrap("model") + -->
+<!--   style_roc() -->
+<!-- ``` -->
+
+# Confusion Matrices
+
+Rows are predicted closures, and columns are actual closures.
+
+
+```{r}
+conf_absolute <- 
+  lapply(select(absolute, matches("absolute")), 
+       function(pred) confusionMatrix(absolute$closed, pred, positive = "1"))
+
+names(conf_absolute) <- gsub("\\.absolute", "", names(conf_absolute))
+
+conf_percap <- 
+  lapply(select(percap, matches("percap")), 
+       function(pred) confusionMatrix(percap$closed, pred, positive = "1"))
+
+names(conf_percap) <- gsub("\\.percap", "", names(conf_percap))
+```
+
+
+## Absolute {.tabset}
+
+```{r results = "asis"}
+lapply(names(conf_absolute),
+       function(nm) {
+         cat("###", nm, "\n\n")
+         
+         kable(conf_absolute[[nm]]$table, caption = nm, ) %>% 
+           kable_styling(full_width = FALSE) %>% cat()
+         }
+       ) %>% invisible()
+```
+
+## Per capita {.tabset}
+
+```{r results = "asis"}
+lapply(names(conf_percap),
+       function(nm) {
+         cat("###", nm, "\n\n")
+         
+         kable(conf_percap[[nm]]$table, caption = nm) %>% 
+           kable_styling(full_width = FALSE) %>% cat()
+         }
+       ) %>% invisible()
+```
+
+# Class-based accuracy stats
+
+```{r}
+class_acc <- 
+  bind_rows(absolute = bind_rows(map(conf_absolute, "byClass"), .id = "model"), 
+            percapita = bind_rows(map(conf_percap, "byClass"), .id = "model"),
+            .id = "data") %>% as.data.table()
+```
+
+## Sensitivity
+```{r results = "asis"}
+class_acc[order(-Sensitivity)] %>% kable(digits = 2) %>% kable_styling()
+```
+
+## Specificity
+```{r results = "asis"}
+class_acc[order(-Specificity)] %>% kable(digits = 2) %>% kable_styling()
+```
+
+# Full caret report
+
+## Absolute
+```{r}
+conf_absolute$RF
+
+conf_absolute$RF_upsamp
+```
+
+## Per capita
+```{r}
+conf_percap$RF
+
+conf_percap$RF_upsamp
+```
+
+# Export favorite
+```{r}
+saveRDS(models$RF.absolute, "data/mod_RF_absolute.rds")
+```
+

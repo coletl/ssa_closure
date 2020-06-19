@@ -1,0 +1,251 @@
+---
+title: "Fit models on augmented data"
+author: 
+  - "Cole Tanigawa-Lau"
+date: ""
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  theme: paper
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 7, fig.height = 5)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r about, echo=FALSE, results = "asis"}
+cat(
+  sprintf("Updated: %s.", 
+          format(Sys.time(), "%b %d, %Y at %H:%M:%S", usetz = TRUE)),
+  sprintf("Working directory: `%s`.", getwd()),
+  sep = "\n\n"
+)
+```
+
+This script trains models on the raw and augmented data. I report confusion matrices of fitted vs. observed values (dichotomized for logit). For model predictions on raw data, see the next script.
+
+Reads:
+
+- data/demograph_service.rds
+- data/office_closures.rds
+
+Writes:
+
+- FILEPATH
+
+# Setup
+
+```{r packages, warning=FALSE, message=FALSE}
+library(coler)
+library(dplyr)
+library(data.table)
+
+library(caret)
+library(randomForest)
+
+set.seed(575)
+```
+
+
+
+```{r final prep, child = "0-final_prep.Rmd"}
+
+```
+
+
+Model formula for absolute and per-capita predictors.
+```{r}
+vars_absolute <- 
+  c("white", "black", "english_imp", "income", "income_publass",
+    "income_ss", "poverty", "seniors", "educ_hsgrad", 
+    "pop",
+    "nn_dist")
+
+form_absolute <- sprintf("closed ~ %s", paste(vars_absolute, collapse = " + "))
+
+
+vars_percap <- paste0("prop_", setdiff(vars_absolute, vars_nopc)) %>%
+  c("pop")
+
+form_percap <- sprintf("closed ~ %s",
+                       paste(vars_percap, collapse = " + "))
+```
+
+
+## Data augmentation
+
+Create training sets of augmented data?
+
+```{r resampling}
+# Up-sample
+absolute_upsamp  <- absolute[ , upSample(.SD, closed)]
+percap_upsamp    <- percap[   , upSample(.SD, closed)]
+  
+  # Down-sample
+absolute_downsamp  <- absolute[ , downSample(.SD, closed)]
+percap_downsamp    <- percap[   , downSample(.SD, closed)]
+```
+
+
+```{r test resampling, include = FALSE}
+stopifnot(
+  0.5 == mean(as.character(absolute_upsamp$closed) %>% as.numeric()),
+  0.5 == mean(as.character(percap_upsamp$closed) %>% as.numeric()),
+  0.5 == mean(as.character(absolute_downsamp$closed) %>% as.numeric()),
+  0.5 == mean(as.character(percap_downsamp$closed) %>% as.numeric())
+)
+```
+
+
+```{r}
+absolute_train  <- mget(ls(pattern = "^absolute")) %>%
+  lapply(as.data.table)
+
+percap_train <- mget(ls(pattern = "^percap")) %>%
+  lapply(as.data.table)
+
+```
+
+
+# Analysis
+
+## Recipe
+
+  1) Fit model on training (augmented) samples
+  3) Add fitted values to training sample
+  4) Return model for predictions on test set (original sample)
+  
+
+Iterate over data sets, collecting models in a list for each algorithm.
+
+Keeping outcome (`closed`) and all predictions as factors for consistency with `randomForest`.
+
+
+## K-Means
+
+I don't see a point in oversampling here. Just running directly on the original samples.
+
+```{r kmeans}
+kmeans_absolute <- kmeans(absolute[ , ..vars_absolute], centers = 2)
+absolute[ , kluster := as.factor(kmeans_absolute$cluster - 1)]
+
+kmeans_percap <- kmeans(percap[ , ..vars_percap], centers = 2)
+percap[ , kluster := as.factor(kmeans_percap$cluster - 1)]
+```
+
+### Confusion
+```{r}
+absolute[ , table(closed, kluster)]
+
+percap[ , table(closed, kluster)]
+```
+
+## Logistic regression
+
+```{r logit}
+mods_logit <- 
+  c(
+    lapply(absolute_train, 
+           function(dt) {
+             mod <- 
+               glm(formula = form_absolute, family = binomial(link = "logit"),
+                   data = dt)
+             
+             dt[ , logit_pred := mod$fitted.values %>% 
+                   cutoff(., threshold = median(.))]
+             
+             return(mod)
+           }    
+    ),
+    
+    lapply(percap_train, 
+           function(dt) {
+             mod <- 
+               glm(formula = form_percap, family = binomial(link = "logit"),
+                   data = dt)
+             
+             dt[ , logit_pred := (mod$fitted.values > 0.5) %>% 
+                   as.numeric() %>% as.factor()]
+             
+             return(mod)
+             
+           }    
+    )
+    
+  )
+
+```
+
+
+## Random forest
+
+```{r RF}
+mods_RF <- 
+  c(
+    lapply(absolute_train, 
+           function(dt) {
+             mod <- 
+               randomForest(data = dt, as.formula(form_absolute),
+                            # mtry = ,
+                            ntree = 1000, importance = TRUE)
+             
+             dt[ , RF_pred := mod$predicted]
+             
+             return(mod)
+           }    
+    ),
+    
+    lapply(percap_train, 
+           function(dt) {
+             mod <- 
+               randomForest(data = dt, as.formula(form_percap),
+                            # mtry = ,
+                            ntree = 1000, importance = TRUE)
+             
+             dt[ , RF_pred := mod$predicted]
+             
+             return(mod)
+           }    
+    )
+    
+  )
+
+```
+
+## XG-Boost
+
+
+# Training confusion
+Random forest got the upsamples right on.
+
+```{r}
+map(absolute_train,
+    ~ .x[ , table(closed, logit_pred)])
+
+map(absolute_train,
+    ~ .x[ , table(closed, RF_pred)])
+```
+
+```{r}
+map(percap_train,
+    ~ .x[ , table(closed, logit_pred)])
+
+map(percap_train,
+    ~ .x[ , table(closed, RF_pred)])
+```
+
+# Export models
+```{r}
+mods <- do.call(c, mget(ls(pattern = "mods_")))
+
+names(mods) <- gsub("^mods_", "", names(mods))
+
+saveRDS(mods, "data/fitted_models.rds")
+```
+

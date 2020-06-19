@@ -1,0 +1,158 @@
+---
+title: "Descriptive analysis"
+author: 
+  - "Cole Tanigawa-Lau"
+date: ""
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  theme: paper
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 7, fig.height = 5)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r about, echo=FALSE, results = "asis"}
+cat(
+  sprintf("Updated: %s.", 
+          format(Sys.time(), "%b %d, %Y at %H:%M:%S", usetz = TRUE)),
+  sprintf("Working directory: `%s`.", getwd()),
+  sep = "\n\n"
+)
+```
+
+
+Reads:
+
+  - data/mod_RF_absolute.rds
+
+Writes:
+
+  - FILEPATH
+
+# Setup
+
+```{r packages, warning=FALSE, message=FALSE}
+rm(list = ls())
+
+library(coler)
+library(dplyr)
+library(data.table)
+library(caret)
+library(randomForest)
+```
+
+```{r final prep, child = "0-final_prep.Rmd"}
+stopifnot(exists("absolute"))
+```
+
+```{r}
+model <- readRDS("data/mod_RF_absolute.rds")
+models <- readRDS("data/fitted_models.rds")
+```
+
+
+# K-Means
+```{r}
+kmeans_absolute <- kmeans(absolute[ , ..vars_absolute], centers = 2)
+absolute[ , kluster := as.factor(kmeans_absolute$cluster - 1)]
+
+absolute[ , confusionMatrix(kluster, reference = closed, positive = "1")]
+```
+
+# Logit
+```{r}
+summary(models$logit.absolute)
+```
+
+## Confusion matrix: fitted values
+```{r}
+confusionMatrix(
+  
+  models$logit.absolute$fitted.values %>% 
+    cutoff(., threshold = median(.)),
+  
+  reference = absolute$closed,
+  
+  positive = "1"
+)
+```
+
+
+# Random forest
+
+```{r}
+models$RF.absolute
+```
+
+## Confusion matrix
+### Fitted values
+
+```{r}
+# Fitted
+confusionMatrix(predict(models$RF.absolute, newdata = absolute),
+  
+  reference = absolute$closed,
+  
+  positive = "1")
+```
+
+### OOB predictions
+```{r}
+# OOB prediction
+confusionMatrix(models$RF.absolute$predicted,
+  
+  reference = absolute$closed,
+  
+  positive = "1")
+```
+
+
+```{r eval = FALSE, include = FALSE}
+set.seed(575)
+test <- sample_frac(absolute, 0.20)
+train <- setdiff(absolute, test)
+
+# RFtrain <- randomForest(x = train[ , ..vars_absolute],
+#                         y = train[ , closed], mtry = 5)
+```
+
+```{r eval = FALSE, include = FALSE}
+## FAILS TO PREDICT ANY CLOSURES IN TEST SET
+
+logit <- glm(data = train, formula = form_absolute, family = binomial(link = "logit"))
+
+test[ , caret::confusionMatrix(closed, 
+                               predict(logit, newdata = test, type = "response") %>% 
+                                 {as.numeric(. > 0.5)} %>% as.factor())]$table
+
+predict(logit, newdata = test, type = "response") %>% 
+                                 {as.numeric(. > 0.5)} %>% table()
+```
+
+
+
+```{r eval = FALSE, include = FALSE}
+# OUT OF SAMPLE PREDICTION IS TERRIBLE, NO TRUE POSITIVES
+
+mtries <- 3:8
+mods <- 
+  parallel::mclapply(mtries,
+                     FUN = function(mtry) 
+                       randomForest(x = train[ , ..vars_absolute],
+                                    y = train[ , closed], mtry = mtry),
+                     mc.cores = length(mtries))
+
+map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test))]$table) %>% 
+  setNames(mtries)
+```
+
+
+
