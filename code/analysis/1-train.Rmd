@@ -42,11 +42,14 @@ Writes:
 # Setup
 
 ```{r packages, warning=FALSE, message=FALSE}
+tictoc::tic()
+
 library(coler)
 library(dplyr)
 library(data.table)
 
 library(caret)
+library(glmnet)
 library(randomForest)
 
 set.seed(575)
@@ -68,7 +71,7 @@ Create training sets of augmented data?
 absolute_upsamp  <- absolute[ , upSample(.SD, closed)]
 percap_upsamp    <- percap[   , upSample(.SD, closed)]
   
-  # Down-sample
+# Down-sample
 absolute_downsamp  <- absolute[ , downSample(.SD, closed)]
 percap_downsamp    <- percap[   , downSample(.SD, closed)]
 ```
@@ -129,6 +132,8 @@ percap[ , table(closed, kluster)]
 
 ## Logistic regression
 
+Cutoff value is mean of outcome in sample.
+
 ```{r logit}
 mods_logit <- 
   c(
@@ -138,8 +143,10 @@ mods_logit <-
                glm(formula = form_absolute, family = binomial(link = "logit"),
                    data = dt)
              
+             mean_out <- mean(as.numeric(as.character(dt$closed)))
+             
              dt[ , logit_pred := mod$fitted.values %>% 
-                   cutoff(., threshold = median(.))]
+                   cutoff(., threshold = mean_out)]
              
              return(mod)
            }    
@@ -151,10 +158,65 @@ mods_logit <-
                glm(formula = form_percap, family = binomial(link = "logit"),
                    data = dt)
              
-             dt[ , logit_pred := (mod$fitted.values > 0.5) %>% 
-                   as.numeric() %>% as.factor()]
+             mean_out <- mean(as.numeric(as.character(dt$closed)))
+             
+             dt[ , logit_pred := mod$fitted.values %>% 
+                   cutoff(., threshold = mean_out)]
              
              return(mod)
+             
+           }    
+    )
+    
+  )
+
+```
+
+
+## Elastic net
+
+Cutoff value is mean of outcome in sample.
+
+```{r elastic net}
+mods_elnet <- 
+  c(
+    lapply(absolute_train, 
+           function(dt) {
+             X <- dt[ , ..vars_absolute] %>% as.matrix()
+             cvmod <- 
+               cv.glmnet(x = X,
+                         y = dt[ , closed], 
+                         family = binomial(link = "logit"),
+                         alpha = 0.5)
+             
+             mean_out <- mean(as.numeric(as.character(dt$closed)))
+             
+             dt[ , elnet_pred := predict(cvmod$glmnet.fit, newx = X,
+                                         s = cvmod$lambda.min, 
+                                         type = "response") %>% 
+                   cutoff(., threshold = mean_out)]
+             
+             return(cvmod$glmnet.fit)
+           }    
+    ),
+    
+    lapply(percap_train, 
+           function(dt) {
+             X <- dt[ , ..vars_percap] %>% as.matrix()
+             cvmod <- 
+               cv.glmnet(x = X,
+                         y = dt[ , closed], 
+                         family = binomial(link = "logit"),
+                         alpha = 0.5)
+             
+             mean_out <- mean(as.numeric(as.character(dt$closed)))
+             
+             dt[ , elnet_pred := predict(cvmod$glmnet.fit, newx = X,
+                                         s = cvmod$lambda.min, 
+                                         type = "response") %>% 
+                   cutoff(., threshold = mean_out)]
+             
+             return(cvmod$glmnet.fit)
              
            }    
     )
@@ -228,5 +290,9 @@ mods <- do.call(c, mget(ls(pattern = "mods_")))
 names(mods) <- gsub("^mods_", "", names(mods))
 
 saveRDS(mods, "data/fitted_models.rds")
+```
+
+```{r}
+tictoc::toc()
 ```
 

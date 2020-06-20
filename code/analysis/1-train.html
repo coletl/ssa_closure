@@ -2786,7 +2786,7 @@ div.tocify {
 </div>
 
 
-<p>Updated: Jun 20, 2020 at 07:38:02 +04.</p>
+<p>Updated: Jun 20, 2020 at 14:53:19 +04.</p>
 <p>Working directory: <code>/home/ctl277/Dropbox/ssa_closure</code>.</p>
 <p>This script trains models on the raw and augmented data. I report confusion matrices of fitted vs. observed values (dichotomized for logit). For model predictions on raw data, see the next script.</p>
 <p>Reads:</p>
@@ -2800,11 +2800,14 @@ div.tocify {
 </ul>
 <div id="setup" class="section level1">
 <h1>Setup</h1>
-<pre class="r"><code>library(coler)
+<pre class="r"><code>tictoc::tic()
+
+library(coler)
 library(dplyr)
 library(data.table)
 
 library(caret)
+library(glmnet)
 library(randomForest)
 
 set.seed(575)</code></pre>
@@ -2849,12 +2852,15 @@ vars_absolute &lt;-
     &quot;area&quot;, &quot;nn_dist&quot;, &quot;num_tracts&quot;
     )
 
+if(offcompl[ , all.equal(income_ss, income_publass)]) 
+  vars_absolute &lt;- setdiff(vars_absolute, &quot;income_publass&quot;)
+
 form_absolute &lt;- reformulate(termlabels = vars_absolute, response = &quot;closed&quot;)</code></pre>
 <pre class="r"><code>percap &lt;- copy(offcompl)
 
 
 # Variables not to divide by population
-vars_nopc &lt;- c(&quot;pop&quot;, &quot;nn_dist&quot;)
+vars_nopc &lt;- c(&quot;pop&quot;, &quot;nn_dist&quot;, &quot;prop_area&quot;, &quot;prop_num_tracts&quot;)
 
 
 set_cols(percap, j = setdiff(vars_absolute, vars_nopc), 
@@ -2876,7 +2882,7 @@ form_percap &lt;- reformulate(termlabels = vars_percap, response = &quot;closed&
 absolute_upsamp  &lt;- absolute[ , upSample(.SD, closed)]
 percap_upsamp    &lt;- percap[   , upSample(.SD, closed)]
   
-  # Down-sample
+# Down-sample
 absolute_downsamp  &lt;- absolute[ , downSample(.SD, closed)]
 percap_downsamp    &lt;- percap[   , downSample(.SD, closed)]</code></pre>
 <pre class="r"><code>absolute_train  &lt;- mget(ls(pattern = &quot;^absolute&quot;)) %&gt;%
@@ -2922,6 +2928,7 @@ percap[ , kluster := as.factor(kmeans_percap$cluster - 1)]</code></pre>
 </div>
 <div id="logistic-regression" class="section level2">
 <h2>Logistic regression</h2>
+<p>Cutoff value is mean of outcome in sample.</p>
 <pre class="r"><code>mods_logit &lt;- 
   c(
     lapply(absolute_train, 
@@ -2930,8 +2937,10 @@ percap[ , kluster := as.factor(kmeans_percap$cluster - 1)]</code></pre>
                glm(formula = form_absolute, family = binomial(link = &quot;logit&quot;),
                    data = dt)
              
+             mean_out &lt;- mean(as.numeric(as.character(dt$closed)))
+             
              dt[ , logit_pred := mod$fitted.values %&gt;% 
-                   cutoff(., threshold = median(.))]
+                   cutoff(., threshold = mean_out)]
              
              return(mod)
            }    
@@ -2943,10 +2952,60 @@ percap[ , kluster := as.factor(kmeans_percap$cluster - 1)]</code></pre>
                glm(formula = form_percap, family = binomial(link = &quot;logit&quot;),
                    data = dt)
              
-             dt[ , logit_pred := (mod$fitted.values &gt; 0.5) %&gt;% 
-                   as.numeric() %&gt;% as.factor()]
+             mean_out &lt;- mean(as.numeric(as.character(dt$closed)))
+             
+             dt[ , logit_pred := mod$fitted.values %&gt;% 
+                   cutoff(., threshold = mean_out)]
              
              return(mod)
+             
+           }    
+    )
+    
+  )</code></pre>
+</div>
+<div id="elastic-net" class="section level2">
+<h2>Elastic net</h2>
+<p>Cutoff value is mean of outcome in sample.</p>
+<pre class="r"><code>mods_elnet &lt;- 
+  c(
+    lapply(absolute_train, 
+           function(dt) {
+             X &lt;- dt[ , ..vars_absolute] %&gt;% as.matrix()
+             cvmod &lt;- 
+               cv.glmnet(x = X,
+                         y = dt[ , closed], 
+                         family = binomial(link = &quot;logit&quot;),
+                         alpha = 0.5)
+             
+             mean_out &lt;- mean(as.numeric(as.character(dt$closed)))
+             
+             dt[ , elnet_pred := predict(cvmod$glmnet.fit, newx = X,
+                                         s = cvmod$lambda.min, 
+                                         type = &quot;response&quot;) %&gt;% 
+                   cutoff(., threshold = mean_out)]
+             
+             return(cvmod$glmnet.fit)
+           }    
+    ),
+    
+    lapply(percap_train, 
+           function(dt) {
+             X &lt;- dt[ , ..vars_percap] %&gt;% as.matrix()
+             cvmod &lt;- 
+               cv.glmnet(x = X,
+                         y = dt[ , closed], 
+                         family = binomial(link = &quot;logit&quot;),
+                         alpha = 0.5)
+             
+             mean_out &lt;- mean(as.numeric(as.character(dt$closed)))
+             
+             dt[ , elnet_pred := predict(cvmod$glmnet.fit, newx = X,
+                                         s = cvmod$lambda.min, 
+                                         type = &quot;response&quot;) %&gt;% 
+                   cutoff(., threshold = mean_out)]
+             
+             return(cvmod$glmnet.fit)
              
            }    
     )
@@ -2997,46 +3056,46 @@ percap[ , kluster := as.factor(kmeans_percap$cluster - 1)]</code></pre>
 <pre><code>## $absolute
 ##       logit_pred
 ## closed    0    1
-##      0 3122 3096
-##      1   16   49
+##      0 4365 1853
+##      1   28   37
 ## 
 ## $absolute_downsamp
 ##       logit_pred
 ## closed  0  1
-##      0 46 19
-##      1 19 46
+##      0 50 15
+##      1 20 45
 ## 
 ## $absolute_upsamp
 ##       logit_pred
 ## closed    0    1
-##      0 3974 2244
-##      1 2244 3974</code></pre>
+##      0 4492 1726
+##      1 2625 3593</code></pre>
 <pre class="r"><code>map(absolute_train,
     ~ .x[ , table(closed, RF_pred)])</code></pre>
 <pre><code>## $absolute
 ##       RF_pred
 ## closed    0    1
-##      0 6192   26
+##      0 6194   24
 ##      1   65    0
 ## 
 ## $absolute_downsamp
 ##       RF_pred
 ## closed  0  1
-##      0 34 31
-##      1 32 33
+##      0 33 32
+##      1 31 34
 ## 
 ## $absolute_upsamp
 ##       RF_pred
 ## closed    0    1
-##      0 6168   50
+##      0 6173   45
 ##      1    0 6218</code></pre>
 <pre class="r"><code>map(percap_train,
     ~ .x[ , table(closed, logit_pred)])</code></pre>
 <pre><code>## $percap
 ##       logit_pred
-## closed    0
-##      0 6218
-##      1   65
+## closed    0    1
+##      0 4467 1751
+##      1   25   40
 ## 
 ## $percap_downsamp
 ##       logit_pred
@@ -3066,7 +3125,7 @@ percap[ , kluster := as.factor(kmeans_percap$cluster - 1)]</code></pre>
 ## $percap_upsamp
 ##       RF_pred
 ## closed    0    1
-##      0 6184   34
+##      0 6183   35
 ##      1    0 6218</code></pre>
 </div>
 <div id="export-models" class="section level1">
@@ -3076,6 +3135,8 @@ percap[ , kluster := as.factor(kmeans_percap$cluster - 1)]</code></pre>
 names(mods) &lt;- gsub(&quot;^mods_&quot;, &quot;&quot;, names(mods))
 
 saveRDS(mods, &quot;data/fitted_models.rds&quot;)</code></pre>
+<pre class="r"><code>tictoc::toc()</code></pre>
+<pre><code>## 297.274 sec elapsed</code></pre>
 </div>
 
 
