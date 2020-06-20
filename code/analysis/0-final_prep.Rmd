@@ -28,7 +28,7 @@ Merge.
 offices <- merge(closure, demog, all = TRUE, by = c("office", "year"))
 ```
 
-Subset to complete observations.
+Subset to complete observations. This removes office-years that have no matching service area, because these offices were closed prior to the the last year of data.
 ```{r}
 offcompl <- offices[complete.cases(offices)]
 
@@ -38,12 +38,16 @@ offcompl[ , .(closures = sum(closed),
 ```
 
 
+
 Change outcome to factor for classification trees.
 ```{r}
-# Remove 2015 data since the closure data apparently run through 2014, despite
-# the SSA stating the data come from 2016
-offcompl <- offcompl[year %in% as.character(2000:2014)]
 offcompl$closed <- as.factor(offcompl$closed)
+```
+
+Remove 2015 data since the closure data seem to run through 2014, despite the SSA stating the data come from 2016.
+
+```{r}
+offcompl <- offcompl[year %in% as.character(2010:2014)]
 ```
 
 Test with two data sets: per capita and absolute values. I redefine here.
@@ -55,7 +59,11 @@ vars_absolute <-
   c("white", "black", "english_imp", "income", "income_publass",
     "income_ss", "poverty", "seniors", "educ_hsgrad", 
     "pop",
-    "nn_dist")
+    
+    "total_comp17", "no_comp17", "total_internet17",
+    
+    "area", "nn_dist", "num_tracts"
+    )
 
 form_absolute <- reformulate(termlabels = vars_absolute, response = "closed")
 ```

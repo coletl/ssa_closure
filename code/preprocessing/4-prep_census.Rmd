@@ -44,6 +44,10 @@ Writes:
 
 # Setup
 
+```{r}
+tictoc::tic()
+```
+
 ```{r packages, warning=FALSE, message=FALSE}
 rm(list = ls())
 
@@ -191,11 +195,15 @@ system.time(
               ]
 )
 
-#   user  system elapsed 
-# 45.514   0.109  45.351 
 
 #    user  system elapsed 
 # 107.247   1.723 108.675 
+
+#    user  system elapsed 
+# 186.152   0.496 186.541
+
+#    user  system elapsed 
+# 184.304   1.044 185.335 
 ```
 
 
@@ -236,6 +244,8 @@ tract17 <- readRDS("data/acs/alltracts17.rds") %>%
 ```{r join to sf}
 tract_sf <- left_join(x = tract17, y = tract_wide, by = "GEOID") %>% 
   st_transform(st_crs(3857))
+
+tract_sf$area <- st_area(tract_sf)
 ```
 
 
@@ -283,7 +293,12 @@ names(serv_sfl) <-
 
 interp_fn <- "data/sf_interp/%s.rds"
 tract_sfl_select <- 
-  map(tract_sfl, ~ dplyr::select(.x, matches("_20|comp|internet")))
+  map(tract_sfl, 
+      ~ dplyr::select(.x, matches("_20\\d\\d"),
+                          total_comp17 = total_comp, 
+                          no_comp17 = no_comp, 
+                          total_internet17 = total_internet,
+                          area, num_tracts, nafill))
 ```
 
 
@@ -308,7 +323,15 @@ system.time(
                          
                          # Subset to this year's demographics and rename columns
                          demog_sf <- 
-                           dplyr::select(tract_sfl_select[[st]], matches(yr)) %>% 
+                           dplyr::select(tract_sfl_select[[st]],
+                                         matches(yr),
+                                         total_comp17, 
+                                         no_comp17, 
+                                         total_internet17,
+                                         area,
+                                         num_tracts, 
+                                         nafill
+                                         ) %>% 
                            
                            rename_with(~ gsub(paste0("_", yr), "", .x))
                          
@@ -356,4 +379,7 @@ interp <- dplyr::select(interp, state, year, office, everything(), -geometry)
 saveRDS(interp, "data/demograph_service.rds")
 ```
 
+```{r}
+tictoc::toc()
+```
 
