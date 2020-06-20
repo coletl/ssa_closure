@@ -65,6 +65,10 @@ vars_absolute <-
     "area", "nn_dist", "num_tracts"
     )
 
+if(offcompl[ , all.equal(income_ss, income_publass) | cor(income_ss, income_publass) > 0.95])
+  
+  vars_absolute <- setdiff(vars_absolute, "income_publass")
+
 form_absolute <- reformulate(termlabels = vars_absolute, response = "closed")
 ```
 
@@ -74,7 +78,7 @@ percap <- copy(offcompl)
 
 
 # Variables not to divide by population
-vars_nopc <- c("pop", "nn_dist")
+vars_nopc <- c("pop", "nn_dist", "prop_area", "prop_num_tracts")
 
 
 set_cols(percap, j = setdiff(vars_absolute, vars_nopc), 

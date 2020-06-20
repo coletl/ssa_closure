@@ -2810,7 +2810,7 @@ div.tocify {
 </div>
 
 
-<p>Updated: Jun 20, 2020 at 12:17:59 +04.</p>
+<p>Updated: Jun 20, 2020 at 15:45:10 +04.</p>
 <p>Working directory: <code>/home/ctl277/Dropbox/ssa_closure</code>.</p>
 <p>Reads:</p>
 <ul>
@@ -2868,12 +2868,16 @@ vars_absolute &lt;-
     &quot;area&quot;, &quot;nn_dist&quot;, &quot;num_tracts&quot;
     )
 
+if(offcompl[ , all.equal(income_ss, income_publass) | cor(income_ss, income_publass) &gt; 0.95])
+  
+  vars_absolute &lt;- setdiff(vars_absolute, &quot;income_publass&quot;)
+
 form_absolute &lt;- reformulate(termlabels = vars_absolute, response = &quot;closed&quot;)</code></pre>
 <pre class="r"><code>percap &lt;- copy(offcompl)
 
 
 # Variables not to divide by population
-vars_nopc &lt;- c(&quot;pop&quot;, &quot;nn_dist&quot;)
+vars_nopc &lt;- c(&quot;pop&quot;, &quot;nn_dist&quot;, &quot;prop_area&quot;, &quot;prop_num_tracts&quot;)
 
 
 set_cols(percap, j = setdiff(vars_absolute, vars_nopc), 
@@ -2983,19 +2987,6 @@ balDT[order(-abs(statistic))] %&gt;%
 <td align="left">two.sided</td>
 </tr>
 <tr class="odd">
-<td align="left">income_publass</td>
-<td align="right">-1.34e+04</td>
-<td align="right">9.66e+04</td>
-<td align="right">1.10e+05</td>
-<td align="right">-1.5900</td>
-<td align="right">0.11600</td>
-<td align="right">65.4</td>
-<td align="right">-3.01e+04</td>
-<td align="right">3.38e+03</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
-</tr>
-<tr class="even">
 <td align="left">income_ss</td>
 <td align="right">-1.34e+04</td>
 <td align="right">9.66e+04</td>
@@ -3008,7 +2999,7 @@ balDT[order(-abs(statistic))] %&gt;%
 <td align="left">Welch Two Sample t-test</td>
 <td align="left">two.sided</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">total_comp17</td>
 <td align="right">-1.38e+04</td>
 <td align="right">9.97e+04</td>
@@ -3021,7 +3012,7 @@ balDT[order(-abs(statistic))] %&gt;%
 <td align="left">Welch Two Sample t-test</td>
 <td align="left">two.sided</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">poverty</td>
 <td align="right">-2.81e+04</td>
 <td align="right">2.36e+05</td>
@@ -3034,7 +3025,7 @@ balDT[order(-abs(statistic))] %&gt;%
 <td align="left">Welch Two Sample t-test</td>
 <td align="left">two.sided</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">num_tracts</td>
 <td align="right">-5.94e+00</td>
 <td align="right">6.11e+01</td>
@@ -3047,7 +3038,7 @@ balDT[order(-abs(statistic))] %&gt;%
 <td align="left">Welch Two Sample t-test</td>
 <td align="left">two.sided</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">seniors</td>
 <td align="right">-1.36e+04</td>
 <td align="right">1.85e+05</td>
@@ -3060,7 +3051,7 @@ balDT[order(-abs(statistic))] %&gt;%
 <td align="left">Welch Two Sample t-test</td>
 <td align="left">two.sided</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">no_comp17</td>
 <td align="right">-7.87e+02</td>
 <td align="right">1.27e+04</td>
@@ -3073,7 +3064,7 @@ balDT[order(-abs(statistic))] %&gt;%
 <td align="left">Welch Two Sample t-test</td>
 <td align="left">two.sided</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">total_internet17</td>
 <td align="right">-8.64e+02</td>
 <td align="right">1.75e+04</td>
@@ -3086,7 +3077,7 @@ balDT[order(-abs(statistic))] %&gt;%
 <td align="left">Welch Two Sample t-test</td>
 <td align="left">two.sided</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">pop</td>
 <td align="right">-5.48e+02</td>
 <td align="right">2.03e+04</td>
@@ -3099,7 +3090,7 @@ balDT[order(-abs(statistic))] %&gt;%
 <td align="left">Welch Two Sample t-test</td>
 <td align="left">two.sided</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">nn_dist</td>
 <td align="right">-1.18e+00</td>
 <td align="right">2.43e+01</td>
@@ -3112,7 +3103,7 @@ balDT[order(-abs(statistic))] %&gt;%
 <td align="left">Welch Two Sample t-test</td>
 <td align="left">two.sided</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">white</td>
 <td align="right">-1.68e+03</td>
 <td align="right">1.91e+05</td>
@@ -3125,7 +3116,7 @@ balDT[order(-abs(statistic))] %&gt;%
 <td align="left">Welch Two Sample t-test</td>
 <td align="left">two.sided</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">educ_hsgrad</td>
 <td align="right">2.02e+02</td>
 <td align="right">4.84e+04</td>
@@ -3151,26 +3142,26 @@ absolute[ , confusionMatrix(kluster, reference = closed, positive = &quot;1&quot
 ## 
 ##           Reference
 ## Prediction    0    1
-##          0   10    0
-##          1 6208   65
+##          0 6208   65
+##          1   10    0
 ##                                           
-##                Accuracy : 0.0119          
-##                  95% CI : (0.0094, 0.0149)
+##                Accuracy : 0.9881          
+##                  95% CI : (0.9851, 0.9906)
 ##     No Information Rate : 0.9897          
-##     P-Value [Acc &gt; NIR] : 1               
+##     P-Value [Acc &gt; NIR] : 0.9026          
 ##                                           
-##                   Kappa : 0               
+##                   Kappa : -0.0028         
 ##                                           
-##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
+##  Mcnemar&#39;s Test P-Value : 4.507e-10       
 ##                                           
-##             Sensitivity : 1.000000        
-##             Specificity : 0.001608        
-##          Pos Pred Value : 0.010362        
-##          Neg Pred Value : 1.000000        
+##             Sensitivity : 0.000000        
+##             Specificity : 0.998392        
+##          Pos Pred Value : 0.000000        
+##          Neg Pred Value : 0.989638        
 ##              Prevalence : 0.010345        
-##          Detection Rate : 0.010345        
-##    Detection Prevalence : 0.998408        
-##       Balanced Accuracy : 0.500804        
+##          Detection Rate : 0.000000        
+##    Detection Prevalence : 0.001592        
+##       Balanced Accuracy : 0.499196        
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
@@ -3356,7 +3347,7 @@ income
 </tr>
 <tr>
 <td style="text-align:left">
-income_publass
+income_ss
 </td>
 <td>
 0.00004
@@ -3373,31 +3364,6 @@ income_publass
 </td>
 <td>
 (2.730)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-income_ss
-</td>
-<td>
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-<td>
 </td>
 </tr>
 <tr>
@@ -3826,7 +3792,7 @@ Akaike Inf. Crit.
   arrange(-MeanDecreaseAccuracy)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["variable"],"name":[1],"type":["chr"],"align":["left"]},{"label":["0"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["1"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseAccuracy"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseGini"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"income_publass","2":"0.049872666","3":"-0.055887494","4":"0.048788946","5":"8.001259"},{"1":"income_ss","2":"0.044109364","3":"-0.047088099","4":"0.043177787","5":"7.867152"},{"1":"poverty","2":"0.029726649","3":"-0.036051756","4":"0.029060464","5":"8.232198"},{"1":"educ_hsgrad","2":"0.026249574","3":"-0.030112514","4":"0.025671067","5":"9.630016"},{"1":"total_comp17","2":"0.021194305","3":"-0.025423021","4":"0.020724244","5":"3.664371"},{"1":"pop","2":"0.018412785","3":"-0.023747710","4":"0.017980815","5":"8.245268"},{"1":"income","2":"0.018187143","3":"-0.022233644","4":"0.017779243","5":"8.920307"},{"1":"white","2":"0.017179278","3":"-0.020662295","4":"0.016792183","5":"9.423622"},{"1":"total_internet17","2":"0.015697164","3":"-0.020079322","4":"0.015332961","5":"3.982265"},{"1":"seniors","2":"0.013295335","3":"-0.015875855","4":"0.013001786","5":"8.558660"},{"1":"num_tracts","2":"0.012006304","3":"-0.017135802","4":"0.011708323","5":"3.470547"},{"1":"no_comp17","2":"0.009065918","3":"-0.012645373","4":"0.008844082","5":"4.002503"},{"1":"english_imp","2":"0.006886359","3":"-0.010921582","4":"0.006703911","5":"9.258807"},{"1":"area","2":"0.006282444","3":"-0.009819234","4":"0.006115959","5":"6.349600"},{"1":"black","2":"0.005459819","3":"-0.007308431","4":"0.005329047","5":"8.333806"},{"1":"nn_dist","2":"0.002918117","3":"-0.004867006","4":"0.002838297","5":"11.019245"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["variable"],"name":[1],"type":["chr"],"align":["left"]},{"label":["0"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["1"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseAccuracy"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseGini"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"income_ss","2":"0.031166548","3":"-0.032716534","4":"0.030510191","5":"8.614913"},{"1":"poverty","2":"0.028711498","3":"-0.035796336","4":"0.028063332","5":"8.645190"},{"1":"educ_hsgrad","2":"0.024167184","3":"-0.027597572","4":"0.023646809","5":"9.820714"},{"1":"total_comp17","2":"0.019707941","3":"-0.024420217","4":"0.019255910","5":"4.436114"},{"1":"pop","2":"0.018592848","3":"-0.024774669","4":"0.018156013","5":"8.906795"},{"1":"income","2":"0.017926801","3":"-0.020812982","4":"0.017534866","5":"9.292567"},{"1":"white","2":"0.016929821","3":"-0.019581029","4":"0.016562044","5":"9.796405"},{"1":"num_tracts","2":"0.014664394","3":"-0.020988551","4":"0.014303498","5":"4.031161"},{"1":"total_internet17","2":"0.014431909","3":"-0.017499298","4":"0.014105749","5":"4.506593"},{"1":"seniors","2":"0.013558235","3":"-0.016124890","4":"0.013261241","5":"9.460212"},{"1":"no_comp17","2":"0.009534241","3":"-0.013097120","4":"0.009304154","5":"4.455868"},{"1":"english_imp","2":"0.006890764","3":"-0.010211979","4":"0.006719163","5":"9.495933"},{"1":"black","2":"0.005535076","3":"-0.007914170","4":"0.005400359","5":"8.949997"},{"1":"area","2":"0.005517716","3":"-0.010969630","4":"0.005353250","5":"6.472308"},{"1":"nn_dist","2":"0.002945729","3":"-0.004212734","4":"0.002873262","5":"10.325180"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <div id="confusion-matrix" class="section level2">
@@ -3843,28 +3809,28 @@ confusionMatrix(predict(models$RF.absolute, newdata = absolute),
 ## 
 ##           Reference
 ## Prediction    0    1
-##          0 6218   12
-##          1    0   53
-##                                          
-##                Accuracy : 0.9981         
-##                  95% CI : (0.9967, 0.999)
-##     No Information Rate : 0.9897         
-##     P-Value [Acc &gt; NIR] : 6.825e-16      
-##                                          
-##                   Kappa : 0.8974         
-##                                          
-##  Mcnemar&#39;s Test P-Value : 0.001496       
-##                                          
-##             Sensitivity : 0.815385       
-##             Specificity : 1.000000       
-##          Pos Pred Value : 1.000000       
-##          Neg Pred Value : 0.998074       
-##              Prevalence : 0.010345       
-##          Detection Rate : 0.008435       
-##    Detection Prevalence : 0.008435       
-##       Balanced Accuracy : 0.907692       
-##                                          
-##        &#39;Positive&#39; Class : 1              
+##          0 6218   20
+##          1    0   45
+##                                           
+##                Accuracy : 0.9968          
+##                  95% CI : (0.9951, 0.9981)
+##     No Information Rate : 0.9897          
+##     P-Value [Acc &gt; NIR] : 5.339e-11       
+##                                           
+##                   Kappa : 0.8166          
+##                                           
+##  Mcnemar&#39;s Test P-Value : 2.152e-05       
+##                                           
+##             Sensitivity : 0.692308        
+##             Specificity : 1.000000        
+##          Pos Pred Value : 1.000000        
+##          Neg Pred Value : 0.996794        
+##              Prevalence : 0.010345        
+##          Detection Rate : 0.007162        
+##    Detection Prevalence : 0.007162        
+##       Balanced Accuracy : 0.846154        
+##                                           
+##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
 </div>
 <div id="oob-predictions" class="section level3">
@@ -3879,26 +3845,26 @@ confusionMatrix(models$RF.absolute$predicted,
 ## 
 ##           Reference
 ## Prediction    0    1
-##          0 6192   65
-##          1   26    0
+##          0 6194   65
+##          1   24    0
 ##                                           
-##                Accuracy : 0.9855          
-##                  95% CI : (0.9822, 0.9883)
+##                Accuracy : 0.9858          
+##                  95% CI : (0.9826, 0.9886)
 ##     No Information Rate : 0.9897          
-##     P-Value [Acc &gt; NIR] : 0.9991          
+##     P-Value [Acc &gt; NIR] : 0.9982          
 ##                                           
-##                   Kappa : -0.0059         
+##                   Kappa : -0.0056         
 ##                                           
-##  Mcnemar&#39;s Test P-Value : 6.791e-05       
+##  Mcnemar&#39;s Test P-Value : 2.235e-05       
 ##                                           
-##             Sensitivity : 0.000000        
-##             Specificity : 0.995819        
-##          Pos Pred Value : 0.000000        
-##          Neg Pred Value : 0.989612        
-##              Prevalence : 0.010345        
-##          Detection Rate : 0.000000        
-##    Detection Prevalence : 0.004138        
-##       Balanced Accuracy : 0.497909        
+##             Sensitivity : 0.00000         
+##             Specificity : 0.99614         
+##          Pos Pred Value : 0.00000         
+##          Neg Pred Value : 0.98961         
+##              Prevalence : 0.01035         
+##          Detection Rate : 0.00000         
+##    Detection Prevalence : 0.00382         
+##       Balanced Accuracy : 0.49807         
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
