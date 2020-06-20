@@ -58,8 +58,6 @@ models <- readRDS("data/fitted_models.rds")
 
 # Balance
 ```{r}
-cobalt::bal.tab(absolute[ , ..vars_absolute], treatment = absolute$closed)
-
 baltests <- absolute[ , map(.SD, ~ t.test(.x ~ closed, .SD) %>% list()), 
                       .SDcols = vars_absolute]
 

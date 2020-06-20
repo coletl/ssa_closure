@@ -59,25 +59,6 @@ set.seed(575)
 ```
 
 
-Model formula for absolute and per-capita predictors.
-```{r}
-vars_absolute <- 
-  c("white", "black", "english_imp", "income", "income_publass",
-    "income_ss", "poverty", "seniors", "educ_hsgrad", 
-    "pop",
-    "nn_dist")
-
-form_absolute <- sprintf("closed ~ %s", paste(vars_absolute, collapse = " + "))
-
-
-vars_percap <- paste0("prop_", setdiff(vars_absolute, vars_nopc)) %>%
-  c("pop")
-
-form_percap <- sprintf("closed ~ %s",
-                       paste(vars_percap, collapse = " + "))
-```
-
-
 ## Data augmentation
 
 Create training sets of augmented data?

@@ -2786,7 +2786,7 @@ div.tocify {
 </div>
 
 
-<p>Updated: Jun 19, 2020 at 23:46:46 +04.</p>
+<p>Updated: Jun 20, 2020 at 07:38:02 +04.</p>
 <p>Working directory: <code>/home/ctl277/Dropbox/ssa_closure</code>.</p>
 <p>This script trains models on the raw and augmented data. I report confusion matrices of fitted vs. observed values (dichotomized for logit). For model predictions on raw data, see the next script.</p>
 <p>Reads:</p>
@@ -2821,7 +2821,7 @@ set.seed(575)</code></pre>
 closure &lt;- readRDS(&quot;data/office_closures.rds&quot;) %&gt;% as.data.table()</code></pre>
 <p>Merge.</p>
 <pre class="r"><code>offices &lt;- merge(closure, demog, all = TRUE, by = c(&quot;office&quot;, &quot;year&quot;))</code></pre>
-<p>Subset to complete observations.</p>
+<p>Subset to complete observations. This removes office-years that have no matching service area, because these offices were closed prior to the the last year of data.</p>
 <pre class="r"><code>offcompl &lt;- offices[complete.cases(offices)]
 
 offcompl[ , .(closures = sum(closed), 
@@ -2833,10 +2833,9 @@ offcompl[ , .(closures = sum(closed),
   </script>
 </div>
 <p>Change outcome to factor for classification trees.</p>
-<pre class="r"><code># Remove 2015 data since the closure data apparently run through 2014, despite
-# the SSA stating the data come from 2016
-offcompl &lt;- offcompl[year %in% as.character(2000:2014)]
-offcompl$closed &lt;- as.factor(offcompl$closed)</code></pre>
+<pre class="r"><code>offcompl$closed &lt;- as.factor(offcompl$closed)</code></pre>
+<p>Remove 2015 data since the closure data seem to run through 2014, despite the SSA stating the data come from 2016.</p>
+<pre class="r"><code>offcompl &lt;- offcompl[year %in% as.character(2010:2014)]</code></pre>
 <p>Test with two data sets: per capita and absolute values. I redefine here.</p>
 <pre class="r"><code>absolute &lt;- offcompl
 
@@ -2844,7 +2843,11 @@ vars_absolute &lt;-
   c(&quot;white&quot;, &quot;black&quot;, &quot;english_imp&quot;, &quot;income&quot;, &quot;income_publass&quot;,
     &quot;income_ss&quot;, &quot;poverty&quot;, &quot;seniors&quot;, &quot;educ_hsgrad&quot;, 
     &quot;pop&quot;,
-    &quot;nn_dist&quot;)
+    
+    &quot;total_comp17&quot;, &quot;no_comp17&quot;, &quot;total_internet17&quot;,
+    
+    &quot;area&quot;, &quot;nn_dist&quot;, &quot;num_tracts&quot;
+    )
 
 form_absolute &lt;- reformulate(termlabels = vars_absolute, response = &quot;closed&quot;)</code></pre>
 <pre class="r"><code>percap &lt;- copy(offcompl)
@@ -2866,21 +2869,6 @@ setnames(percap,
 form_percap &lt;- reformulate(termlabels = vars_percap, response = &quot;closed&quot;)</code></pre>
 <p>Some places actually had zero population (interpolated from census tracts).</p>
 <pre class="r"><code>percap &lt;- percap[pop &gt; 0]</code></pre>
-<p>Model formula for absolute and per-capita predictors.</p>
-<pre class="r"><code>vars_absolute &lt;- 
-  c(&quot;white&quot;, &quot;black&quot;, &quot;english_imp&quot;, &quot;income&quot;, &quot;income_publass&quot;,
-    &quot;income_ss&quot;, &quot;poverty&quot;, &quot;seniors&quot;, &quot;educ_hsgrad&quot;, 
-    &quot;pop&quot;,
-    &quot;nn_dist&quot;)
-
-form_absolute &lt;- sprintf(&quot;closed ~ %s&quot;, paste(vars_absolute, collapse = &quot; + &quot;))
-
-
-vars_percap &lt;- paste0(&quot;prop_&quot;, setdiff(vars_absolute, vars_nopc)) %&gt;%
-  c(&quot;pop&quot;)
-
-form_percap &lt;- sprintf(&quot;closed ~ %s&quot;,
-                       paste(vars_percap, collapse = &quot; + &quot;))</code></pre>
 <div id="data-augmentation" class="section level2">
 <h2>Data augmentation</h2>
 <p>Create training sets of augmented data?</p>
@@ -2922,14 +2910,14 @@ percap[ , kluster := as.factor(kmeans_percap$cluster - 1)]</code></pre>
 <h3>Confusion</h3>
 <pre class="r"><code>absolute[ , table(closed, kluster)]</code></pre>
 <pre><code>##       kluster
-## closed     0     1
-##      0  3094 16132
-##      1    36    77</code></pre>
+## closed    0    1
+##      0 6208   10
+##      1   65    0</code></pre>
 <pre class="r"><code>percap[ , table(closed, kluster)]</code></pre>
 <pre><code>##       kluster
-## closed     0     1
-##      0 13825  5361
-##      1    55    58</code></pre>
+## closed    0    1
+##      0 6213    5
+##      1   65    0</code></pre>
 </div>
 </div>
 <div id="logistic-regression" class="section level2">
@@ -3009,77 +2997,77 @@ percap[ , kluster := as.factor(kmeans_percap$cluster - 1)]</code></pre>
 <pre><code>## $absolute
 ##       logit_pred
 ## closed    0    1
-##      0 9622 9604
-##      1   21   92
+##      0 3122 3096
+##      1   16   49
 ## 
 ## $absolute_downsamp
 ##       logit_pred
 ## closed  0  1
-##      0 73 40
-##      1 40 73
+##      0 46 19
+##      1 19 46
 ## 
 ## $absolute_upsamp
 ##       logit_pred
-## closed     0     1
-##      0 12392  6834
-##      1  6990 12236</code></pre>
+## closed    0    1
+##      0 3974 2244
+##      1 2244 3974</code></pre>
 <pre class="r"><code>map(absolute_train,
     ~ .x[ , table(closed, RF_pred)])</code></pre>
 <pre><code>## $absolute
 ##       RF_pred
-## closed     0     1
-##      0 19193    33
-##      1   113     0
+## closed    0    1
+##      0 6192   26
+##      1   65    0
 ## 
 ## $absolute_downsamp
 ##       RF_pred
 ## closed  0  1
-##      0 70 43
-##      1 43 70
+##      0 34 31
+##      1 32 33
 ## 
 ## $absolute_upsamp
 ##       RF_pred
-## closed     0     1
-##      0 19173    53
-##      1     0 19226</code></pre>
+## closed    0    1
+##      0 6168   50
+##      1    0 6218</code></pre>
 <pre class="r"><code>map(percap_train,
     ~ .x[ , table(closed, logit_pred)])</code></pre>
 <pre><code>## $percap
 ##       logit_pred
-## closed     0
-##      0 19186
-##      1   113
+## closed    0
+##      0 6218
+##      1   65
 ## 
 ## $percap_downsamp
 ##       logit_pred
 ## closed  0  1
-##      0 91 22
-##      1 58 55
+##      0 49 16
+##      1 23 42
 ## 
 ## $percap_upsamp
 ##       logit_pred
-## closed     0     1
-##      0 14487  4699
-##      1  9461  9725</code></pre>
+## closed    0    1
+##      0 4481 1737
+##      1 2499 3719</code></pre>
 <pre class="r"><code>map(percap_train,
     ~ .x[ , table(closed, RF_pred)])</code></pre>
 <pre><code>## $percap
 ##       RF_pred
-## closed     0     1
-##      0 19135    51
-##      1   113     0
+## closed    0    1
+##      0 6188   30
+##      1   65    0
 ## 
 ## $percap_downsamp
 ##       RF_pred
 ## closed  0  1
-##      0 70 43
-##      1 42 71
+##      0 42 23
+##      1 27 38
 ## 
 ## $percap_upsamp
 ##       RF_pred
-## closed     0     1
-##      0 19128    58
-##      1     0 19186</code></pre>
+## closed    0    1
+##      0 6184   34
+##      1    0 6218</code></pre>
 </div>
 <div id="export-models" class="section level1">
 <h1>Export models</h1>
