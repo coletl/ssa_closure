@@ -64,8 +64,12 @@ vars_absolute <-
     
     "area", "nn_dist", "num_tracts"
     )
+```
 
-if(offcompl[ , all.equal(income_ss, income_publass) | cor(income_ss, income_publass) > 0.95])
+Check for collinearity between Social Security and public assistance income. Drop if correlation exceeds 0.95.
+
+```{r}
+if(offcompl[ , cor(income_ss, income_publass) > 0.95])
   
   vars_absolute <- setdiff(vars_absolute, "income_publass")
 

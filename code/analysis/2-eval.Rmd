@@ -47,9 +47,11 @@ Writes:
 library(coler)
 library(dplyr)
 library(data.table)
-library(randomForest)
 
+library(glmnet)
+library(randomForest)
 library(caret)
+
 library(kableExtra)
 library(ggplot2)
 ```
@@ -63,13 +65,16 @@ stopifnot(exists("absolute"))
 ```{r}
 models <- readRDS("data/fitted_models.rds")
 
+# Elastic net prediction code not ready yet
+models <- models[grep("elnet", names(models), invert = TRUE)]
+
 mods_percap <- models[grep("percap", names(models))]
 mods_absolute <- models[grep("absolute", names(models))]
 ```
 Predict on true sample.
 
 ```{r predict}
-percap[ , names(mods_percap) := lapply(mods_percap, predict, newdata = percap, 
+percap[ , names(mods_percap) := lapply(mods_percap, predict, newdata = percap, newx = as.numeric(percap),
                                        type = "response")]
 absolute[ , names(mods_absolute) := lapply(mods_absolute, predict, newdata = absolute,
                                            type = "response")]
@@ -77,8 +82,13 @@ absolute[ , names(mods_absolute) := lapply(mods_absolute, predict, newdata = abs
 
 Change logit predictions to classifications
 ```{r}
-set_cols(percap, FUN = cutoff, j = grep("logit", names(percap), value = TRUE))
-set_cols(absolute, FUN = cutoff, j = grep("logit", names(absolute), value = TRUE))
+mean_out <- mean(as.numeric(as.character(percap$closed)))
+
+set_cols(percap, FUN = function(x) cutoff(x, threshold = mean_out),
+         j = grep("logit|elnet", names(percap), value = TRUE))
+
+set_cols(absolute, FUN = function(x) cutoff(x, threshold = mean_out),
+         j = grep("logit|elnet", names(absolute), value = TRUE))
 ```
 
 
@@ -175,7 +185,9 @@ class_acc[order(-Sensitivity)] %>% kable(digits = 2) %>% kable_styling()
 class_acc[order(-Specificity)] %>% kable(digits = 2) %>% kable_styling()
 ```
 
-# Full caret report
+# Full caret report {.tabset}
+
+
 
 ## Absolute
 ```{r}
@@ -189,10 +201,5 @@ conf_absolute$RF_upsamp
 conf_percap$RF
 
 conf_percap$RF_upsamp
-```
-
-# Export favorite
-```{r}
-saveRDS(models$RF.absolute, "data/mod_RF_absolute.rds")
 ```
 
