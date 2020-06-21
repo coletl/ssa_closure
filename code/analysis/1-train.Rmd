@@ -58,7 +58,7 @@ set.seed(575)
 
 
 ```{r final prep, child = "0-final_prep.Rmd"}
-
+source("code/analysis/0-final_prep.R")
 ```
 
 
