@@ -2795,7 +2795,7 @@ div.tocify {
 </div>
 
 
-<p>Updated: Jun 20, 2020 at 15:02:09 +04.</p>
+<p>Updated: Jun 21, 2020 at 07:07:59 +04.</p>
 <p>Working directory: <code>/home/ctl277/Dropbox/ssa_closure</code>.</p>
 <p>Based on these results, I’d say that the random forest consistently out-performed logistic regression. Up-sampling reduces false negatives and increases false positives. I’ll proceed with the random forest model fit to the original absolute (not per-capita) data. This involves the least amount of transformation/augmentation.</p>
 <p>Reads:</p>
@@ -2847,7 +2847,7 @@ offcompl[ , .(closures = sum(closed),
 <p>Change outcome to factor for classification trees.</p>
 <pre class="r"><code>offcompl$closed &lt;- as.factor(offcompl$closed)</code></pre>
 <p>Remove 2015 data since the closure data seem to run through 2014, despite the SSA stating the data come from 2016.</p>
-<pre class="r"><code>offcompl &lt;- offcompl[year %in% as.character(2010:2014)]</code></pre>
+<pre class="r"><code>offcompl &lt;- offcompl[year %in% as.character(2000:2014)]</code></pre>
 <p>Test with two data sets: per capita and absolute values. I redefine here.</p>
 <pre class="r"><code>absolute &lt;- offcompl
 
@@ -2859,9 +2859,10 @@ vars_absolute &lt;-
     &quot;total_comp17&quot;, &quot;no_comp17&quot;, &quot;total_internet17&quot;,
     
     &quot;area&quot;, &quot;nn_dist&quot;, &quot;num_tracts&quot;
-    )
-
-if(offcompl[ , all.equal(income_ss, income_publass)]) 
+    )</code></pre>
+<p>Check for collinearity between Social Security and public assistance income. Drop if correlation exceeds 0.95.</p>
+<pre class="r"><code>if(offcompl[ , cor(income_ss, income_publass) &gt; 0.95])
+  
   vars_absolute &lt;- setdiff(vars_absolute, &quot;income_publass&quot;)
 
 form_absolute &lt;- reformulate(termlabels = vars_absolute, response = &quot;closed&quot;)</code></pre>
@@ -2884,6 +2885,9 @@ setnames(percap,
 form_percap &lt;- reformulate(termlabels = vars_percap, response = &quot;closed&quot;)</code></pre>
 <p>Some places actually had zero population (interpolated from census tracts).</p>
 <pre class="r"><code>percap &lt;- percap[pop &gt; 0]</code></pre>
+<div id="standardize-absolute-variables" class="section level2">
+<h2>Standardize absolute variables</h2>
+<pre class="r"><code>set_cols(absolute, j = vars_absolute, FUN = scale)</code></pre>
 <pre class="r"><code>models &lt;- readRDS(&quot;data/fitted_models.rds&quot;)
 
 # Elastic net prediction code not ready yet
@@ -2926,6 +2930,7 @@ set_cols(absolute, FUN = function(x) cutoff(x, threshold = mean_out),
 <!--   facet_wrap("model") + -->
 <!--   style_roc() -->
 <!-- ``` -->
+</div>
 </div>
 <div id="confusion-matrices" class="section level1">
 <h1>Confusion Matrices</h1>
@@ -2975,10 +2980,10 @@ logit
 0
 </td>
 <td style="text-align:right;">
-4365
+12455
 </td>
 <td style="text-align:right;">
-1853
+6771
 </td>
 </tr>
 <tr>
@@ -2986,10 +2991,10 @@ logit
 1
 </td>
 <td style="text-align:right;">
-28
+42
 </td>
 <td style="text-align:right;">
-37
+71
 </td>
 </tr>
 </tbody>
@@ -3019,10 +3024,10 @@ logit_downsamp
 0
 </td>
 <td style="text-align:right;">
-40
+24
 </td>
 <td style="text-align:right;">
-6178
+19202
 </td>
 </tr>
 <tr>
@@ -3033,7 +3038,7 @@ logit_downsamp
 0
 </td>
 <td style="text-align:right;">
-65
+113
 </td>
 </tr>
 </tbody>
@@ -3063,10 +3068,10 @@ logit_upsamp
 0
 </td>
 <td style="text-align:right;">
-11
+8
 </td>
 <td style="text-align:right;">
-6207
+19218
 </td>
 </tr>
 <tr>
@@ -3077,7 +3082,7 @@ logit_upsamp
 0
 </td>
 <td style="text-align:right;">
-65
+113
 </td>
 </tr>
 </tbody>
@@ -3107,7 +3112,7 @@ RF
 0
 </td>
 <td style="text-align:right;">
-6218
+19226
 </td>
 <td style="text-align:right;">
 0
@@ -3118,10 +3123,10 @@ RF
 1
 </td>
 <td style="text-align:right;">
-19
+39
 </td>
 <td style="text-align:right;">
-46
+74
 </td>
 </tr>
 </tbody>
@@ -3151,10 +3156,10 @@ RF_downsamp
 0
 </td>
 <td style="text-align:right;">
-3686
+11454
 </td>
 <td style="text-align:right;">
-2532
+7772
 </td>
 </tr>
 <tr>
@@ -3165,7 +3170,7 @@ RF_downsamp
 0
 </td>
 <td style="text-align:right;">
-65
+113
 </td>
 </tr>
 </tbody>
@@ -3195,10 +3200,10 @@ RF_upsamp
 0
 </td>
 <td style="text-align:right;">
-6195
+19189
 </td>
 <td style="text-align:right;">
-23
+37
 </td>
 </tr>
 <tr>
@@ -3209,7 +3214,7 @@ RF_upsamp
 0
 </td>
 <td style="text-align:right;">
-65
+113
 </td>
 </tr>
 </tbody>
@@ -3250,10 +3255,10 @@ logit
 0
 </td>
 <td style="text-align:right;">
-4467
+13956
 </td>
 <td style="text-align:right;">
-1751
+5230
 </td>
 </tr>
 <tr>
@@ -3261,10 +3266,10 @@ logit
 1
 </td>
 <td style="text-align:right;">
-25
+54
 </td>
 <td style="text-align:right;">
-40
+59
 </td>
 </tr>
 </tbody>
@@ -3294,10 +3299,10 @@ logit_downsamp
 0
 </td>
 <td style="text-align:right;">
-0
+1
 </td>
 <td style="text-align:right;">
-6218
+19185
 </td>
 </tr>
 <tr>
@@ -3308,7 +3313,7 @@ logit_downsamp
 0
 </td>
 <td style="text-align:right;">
-65
+113
 </td>
 </tr>
 </tbody>
@@ -3341,7 +3346,7 @@ logit_upsamp
 0
 </td>
 <td style="text-align:right;">
-6218
+19186
 </td>
 </tr>
 <tr>
@@ -3352,7 +3357,7 @@ logit_upsamp
 0
 </td>
 <td style="text-align:right;">
-65
+113
 </td>
 </tr>
 </tbody>
@@ -3382,10 +3387,10 @@ RF
 0
 </td>
 <td style="text-align:right;">
-6218
+19146
 </td>
 <td style="text-align:right;">
-0
+40
 </td>
 </tr>
 <tr>
@@ -3393,10 +3398,10 @@ RF
 1
 </td>
 <td style="text-align:right;">
-32
+8
 </td>
 <td style="text-align:right;">
-33
+105
 </td>
 </tr>
 </tbody>
@@ -3426,10 +3431,10 @@ RF_downsamp
 0
 </td>
 <td style="text-align:right;">
-3661
+12133
 </td>
 <td style="text-align:right;">
-2557
+7053
 </td>
 </tr>
 <tr>
@@ -3437,10 +3442,10 @@ RF_downsamp
 1
 </td>
 <td style="text-align:right;">
-1
+0
 </td>
 <td style="text-align:right;">
-64
+113
 </td>
 </tr>
 </tbody>
@@ -3470,10 +3475,10 @@ RF_upsamp
 0
 </td>
 <td style="text-align:right;">
-6184
+19131
 </td>
 <td style="text-align:right;">
-34
+55
 </td>
 </tr>
 <tr>
@@ -3484,7 +3489,7 @@ RF_upsamp
 0
 </td>
 <td style="text-align:right;">
-65
+113
 </td>
 </tr>
 </tbody>
@@ -3557,22 +3562,63 @@ RF
 1.00
 </td>
 <td style="text-align:right;">
-1.00
+1
 </td>
 <td style="text-align:right;">
-0.71
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.71
+0.65
 </td>
 <td style="text-align:right;">
 1.00
 </td>
 <td style="text-align:right;">
-0.83
+0.65
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+absolute
+</td>
+<td style="text-align:left;">
+RF_upsamp
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+0.86
 </td>
 <td style="text-align:right;">
 0.01
@@ -3584,7 +3630,7 @@ RF
 0.01
 </td>
 <td style="text-align:right;">
-1.00
+0.88
 </td>
 </tr>
 <tr>
@@ -3595,25 +3641,25 @@ percapita
 RF
 </td>
 <td style="text-align:right;">
-1.00
+0.72
 </td>
 <td style="text-align:right;">
-0.99
+1
 </td>
 <td style="text-align:right;">
-0.51
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.51
+0.93
 </td>
 <td style="text-align:right;">
 1.00
 </td>
 <td style="text-align:right;">
-0.67
+0.93
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+0.81
 </td>
 <td style="text-align:right;">
 0.01
@@ -3625,48 +3671,7 @@ RF
 0.01
 </td>
 <td style="text-align:right;">
-1.00
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-absolute
-</td>
-<td style="text-align:left;">
-RF_upsamp
-</td>
-<td style="text-align:right;">
-0.74
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.74
-</td>
-<td style="text-align:right;">
-0.85
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.87
+0.86
 </td>
 </tr>
 <tr>
@@ -3677,7 +3682,10 @@ percapita
 RF_upsamp
 </td>
 <td style="text-align:right;">
-0.66
+0.67
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 1.00
@@ -3686,28 +3694,66 @@ RF_upsamp
 1.00
 </td>
 <td style="text-align:right;">
-0.99
-</td>
-<td style="text-align:right;">
 1.00
 </td>
 <td style="text-align:right;">
-0.66
+0.67
 </td>
 <td style="text-align:right;">
-0.79
+0.80
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.84
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+percapita
+</td>
+<td style="text-align:left;">
+RF_downsamp
 </td>
 <td style="text-align:right;">
 0.02
 </td>
 <td style="text-align:right;">
-0.01
+1
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.63
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.37
 </td>
 <td style="text-align:right;">
 0.01
 </td>
 <td style="text-align:right;">
-0.83
+0.01
+</td>
+<td style="text-align:right;">
+0.51
 </td>
 </tr>
 <tr>
@@ -3718,25 +3764,25 @@ absolute
 RF_downsamp
 </td>
 <td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
 0.03
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.59
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.03
-</td>
-<td style="text-align:right;">
-0.05
 </td>
 <td style="text-align:right;">
 0.41
@@ -3756,127 +3802,86 @@ RF_downsamp
 percapita
 </td>
 <td style="text-align:left;">
-RF_downsamp
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.98
-</td>
-<td style="text-align:right;">
-0.59
-</td>
-<td style="text-align:right;">
-0.98
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.05
-</td>
-<td style="text-align:right;">
-0.42
+logit
 </td>
 <td style="text-align:right;">
 0.01
 </td>
 <td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
 0.01
 </td>
 <td style="text-align:right;">
-0.51
+0.02
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+absolute
+</td>
+<td style="text-align:left;">
+logit
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.63
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+0.63
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.35
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.50
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
 percapita
-</td>
-<td style="text-align:left;">
-logit
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.99
-</td>
-<td style="text-align:right;">
-0.62
-</td>
-<td style="text-align:right;">
-0.72
-</td>
-<td style="text-align:right;">
-0.62
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.04
-</td>
-<td style="text-align:right;">
-0.29
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.51
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-absolute
-</td>
-<td style="text-align:left;">
-logit
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.99
-</td>
-<td style="text-align:right;">
-0.57
-</td>
-<td style="text-align:right;">
-0.70
-</td>
-<td style="text-align:right;">
-0.57
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.04
-</td>
-<td style="text-align:right;">
-0.30
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.51
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-absolute
 </td>
 <td style="text-align:left;">
 logit_downsamp
@@ -3885,48 +3890,7 @@ logit_downsamp
 0.01
 </td>
 <td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.99
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.51
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-absolute
-</td>
-<td style="text-align:left;">
-logit_upsamp
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-1.00
+1
 </td>
 <td style="text-align:right;">
 1.00
@@ -3941,7 +3905,7 @@ logit_upsamp
 0.01
 </td>
 <td style="text-align:right;">
-0.02
+0.01
 </td>
 <td style="text-align:right;">
 1.00
@@ -3953,48 +3917,7 @@ logit_upsamp
 0.01
 </td>
 <td style="text-align:right;">
-0.51
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-percapita
-</td>
-<td style="text-align:left;">
-logit_downsamp
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-NA
+0.50
 </td>
 </tr>
 <tr>
@@ -4023,7 +3946,7 @@ NA
 0.01
 </td>
 <td style="text-align:right;">
-0.02
+0.01
 </td>
 <td style="text-align:right;">
 1.00
@@ -4036,6 +3959,88 @@ NA
 </td>
 <td style="text-align:right;">
 NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+absolute
+</td>
+<td style="text-align:left;">
+logit_downsamp
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+absolute
+</td>
+<td style="text-align:left;">
+logit_upsamp
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.50
 </td>
 </tr>
 </tbody>
@@ -4100,48 +4105,7 @@ logit_downsamp
 0.01
 </td>
 <td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.99
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.51
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-absolute
-</td>
-<td style="text-align:left;">
-logit_upsamp
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-1.00
+1
 </td>
 <td style="text-align:right;">
 1.00
@@ -4156,7 +4120,7 @@ logit_upsamp
 0.01
 </td>
 <td style="text-align:right;">
-0.02
+0.01
 </td>
 <td style="text-align:right;">
 1.00
@@ -4168,7 +4132,48 @@ logit_upsamp
 0.01
 </td>
 <td style="text-align:right;">
-0.51
+0.50
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+absolute
+</td>
+<td style="text-align:left;">
+logit_upsamp
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.50
 </td>
 </tr>
 <tr>
@@ -4179,25 +4184,25 @@ absolute
 RF_downsamp
 </td>
 <td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.60
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
 0.03
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.59
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.03
-</td>
-<td style="text-align:right;">
-0.05
 </td>
 <td style="text-align:right;">
 0.41
@@ -4220,7 +4225,10 @@ absolute
 RF_upsamp
 </td>
 <td style="text-align:right;">
-0.74
+0.75
+</td>
+<td style="text-align:right;">
+1
 </td>
 <td style="text-align:right;">
 1.00
@@ -4232,13 +4240,10 @@ RF_upsamp
 1.00
 </td>
 <td style="text-align:right;">
-1.00
+0.75
 </td>
 <td style="text-align:right;">
-0.74
-</td>
-<td style="text-align:right;">
-0.85
+0.86
 </td>
 <td style="text-align:right;">
 0.01
@@ -4250,253 +4255,7 @@ RF_upsamp
 0.01
 </td>
 <td style="text-align:right;">
-0.87
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-percapita
-</td>
-<td style="text-align:left;">
-RF_upsamp
-</td>
-<td style="text-align:right;">
-0.66
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.99
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.66
-</td>
-<td style="text-align:right;">
-0.79
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.83
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-percapita
-</td>
-<td style="text-align:left;">
-RF_downsamp
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.98
-</td>
-<td style="text-align:right;">
-0.59
-</td>
-<td style="text-align:right;">
-0.98
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.05
-</td>
-<td style="text-align:right;">
-0.42
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.51
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-absolute
-</td>
-<td style="text-align:left;">
-RF
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.71
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.71
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.83
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-percapita
-</td>
-<td style="text-align:left;">
-RF
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.99
-</td>
-<td style="text-align:right;">
-0.51
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.51
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.67
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-percapita
-</td>
-<td style="text-align:left;">
-logit
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.99
-</td>
-<td style="text-align:right;">
-0.62
-</td>
-<td style="text-align:right;">
-0.72
-</td>
-<td style="text-align:right;">
-0.62
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.04
-</td>
-<td style="text-align:right;">
-0.29
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.51
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-absolute
-</td>
-<td style="text-align:left;">
-logit
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.99
-</td>
-<td style="text-align:right;">
-0.57
-</td>
-<td style="text-align:right;">
-0.70
-</td>
-<td style="text-align:right;">
-0.57
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.04
-</td>
-<td style="text-align:right;">
-0.30
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.51
+0.88
 </td>
 </tr>
 <tr>
@@ -4510,16 +4269,221 @@ logit_downsamp
 0.01
 </td>
 <td style="text-align:right;">
-NA
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:right;">
-NA
+1
 </td>
 <td style="text-align:right;">
 1.00
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+percapita
+</td>
+<td style="text-align:left;">
+RF_downsamp
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.63
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.51
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+percapita
+</td>
+<td style="text-align:left;">
+RF_upsamp
+</td>
+<td style="text-align:right;">
+0.67
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.67
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.84
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+percapita
+</td>
+<td style="text-align:left;">
+RF
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.93
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.93
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+0.81
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.86
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+absolute
+</td>
+<td style="text-align:left;">
+RF
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.79
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+absolute
+</td>
+<td style="text-align:left;">
+logit
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.63
+</td>
+<td style="text-align:right;">
+0.65
+</td>
+<td style="text-align:right;">
+0.63
 </td>
 <td style="text-align:right;">
 0.01
@@ -4528,16 +4492,57 @@ NA
 0.02
 </td>
 <td style="text-align:right;">
-1.00
+0.35
+</td>
+<td style="text-align:right;">
+0.00
 </td>
 <td style="text-align:right;">
 0.01
 </td>
 <td style="text-align:right;">
+0.50
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+percapita
+</td>
+<td style="text-align:left;">
+logit
+</td>
+<td style="text-align:right;">
 0.01
 </td>
 <td style="text-align:right;">
-NA
+1
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+<td style="text-align:right;">
+0.52
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.50
 </td>
 </tr>
 <tr>
@@ -4566,7 +4571,7 @@ NA
 0.01
 </td>
 <td style="text-align:right;">
-0.02
+0.01
 </td>
 <td style="text-align:right;">
 1.00
@@ -4593,27 +4598,27 @@ NA
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
-## Prediction    0    1
-##          0 6218    0
-##          1   19   46
+## Prediction     0     1
+##          0 19226     0
+##          1    39    74
 ##                                           
-##                Accuracy : 0.997           
-##                  95% CI : (0.9953, 0.9982)
-##     No Information Rate : 0.9927          
-##     P-Value [Acc &gt; NIR] : 5.311e-06       
+##                Accuracy : 0.998           
+##                  95% CI : (0.9972, 0.9986)
+##     No Information Rate : 0.9962          
+##     P-Value [Acc &gt; NIR] : 5.641e-06       
 ##                                           
-##                   Kappa : 0.8273          
+##                   Kappa : 0.7905          
 ##                                           
-##  Mcnemar&#39;s Test P-Value : 3.636e-05       
+##  Mcnemar&#39;s Test P-Value : 1.166e-09       
 ##                                           
 ##             Sensitivity : 1.000000        
-##             Specificity : 0.996954        
-##          Pos Pred Value : 0.707692        
+##             Specificity : 0.997976        
+##          Pos Pred Value : 0.654867        
 ##          Neg Pred Value : 1.000000        
-##              Prevalence : 0.007321        
-##          Detection Rate : 0.007321        
-##    Detection Prevalence : 0.010345        
-##       Balanced Accuracy : 0.998477        
+##              Prevalence : 0.003826        
+##          Detection Rate : 0.003826        
+##    Detection Prevalence : 0.005843        
+##       Balanced Accuracy : 0.998988        
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
@@ -4621,27 +4626,27 @@ NA
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
-## Prediction    0    1
-##          0 6195   23
-##          1    0   65
+## Prediction     0     1
+##          0 19189    37
+##          1     0   113
 ##                                           
-##                Accuracy : 0.9963          
-##                  95% CI : (0.9945, 0.9977)
-##     No Information Rate : 0.986           
+##                Accuracy : 0.9981          
+##                  95% CI : (0.9974, 0.9987)
+##     No Information Rate : 0.9922          
 ##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
 ##                                           
-##                   Kappa : 0.8479          
+##                   Kappa : 0.8584          
 ##                                           
-##  Mcnemar&#39;s Test P-Value : 4.49e-06        
+##  Mcnemar&#39;s Test P-Value : 3.252e-09       
 ##                                           
-##             Sensitivity : 0.73864         
-##             Specificity : 1.00000         
-##          Pos Pred Value : 1.00000         
-##          Neg Pred Value : 0.99630         
-##              Prevalence : 0.01401         
-##          Detection Rate : 0.01035         
-##    Detection Prevalence : 0.01035         
-##       Balanced Accuracy : 0.86932         
+##             Sensitivity : 0.753333        
+##             Specificity : 1.000000        
+##          Pos Pred Value : 1.000000        
+##          Neg Pred Value : 0.998076        
+##              Prevalence : 0.007756        
+##          Detection Rate : 0.005843        
+##    Detection Prevalence : 0.005843        
+##       Balanced Accuracy : 0.876667        
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
@@ -4652,27 +4657,27 @@ NA
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
-## Prediction    0    1
-##          0 6218    0
-##          1   32   33
+## Prediction     0     1
+##          0 19146    40
+##          1     8   105
 ##                                           
-##                Accuracy : 0.9949          
-##                  95% CI : (0.9928, 0.9965)
-##     No Information Rate : 0.9947          
-##     P-Value [Acc &gt; NIR] : 0.4767          
+##                Accuracy : 0.9975          
+##                  95% CI : (0.9967, 0.9982)
+##     No Information Rate : 0.9925          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
 ##                                           
-##                   Kappa : 0.6712          
+##                   Kappa : 0.8127          
 ##                                           
-##  Mcnemar&#39;s Test P-Value : 4.251e-08       
+##  Mcnemar&#39;s Test P-Value : 7.66e-06        
 ##                                           
-##             Sensitivity : 1.000000        
-##             Specificity : 0.994880        
-##          Pos Pred Value : 0.507692        
-##          Neg Pred Value : 1.000000        
-##              Prevalence : 0.005252        
-##          Detection Rate : 0.005252        
-##    Detection Prevalence : 0.010345        
-##       Balanced Accuracy : 0.997440        
+##             Sensitivity : 0.724138        
+##             Specificity : 0.999582        
+##          Pos Pred Value : 0.929204        
+##          Neg Pred Value : 0.997915        
+##              Prevalence : 0.007513        
+##          Detection Rate : 0.005441        
+##    Detection Prevalence : 0.005855        
+##       Balanced Accuracy : 0.861860        
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
@@ -4680,27 +4685,27 @@ NA
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
-## Prediction    0    1
-##          0 6184   34
-##          1    0   65
+## Prediction     0     1
+##          0 19131    55
+##          1     0   113
 ##                                           
-##                Accuracy : 0.9946          
-##                  95% CI : (0.9924, 0.9962)
-##     No Information Rate : 0.9842          
-##     P-Value [Acc &gt; NIR] : 2.610e-14       
+##                Accuracy : 0.9972          
+##                  95% CI : (0.9963, 0.9979)
+##     No Information Rate : 0.9913          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
 ##                                           
-##                   Kappa : 0.7901          
+##                   Kappa : 0.8029          
 ##                                           
-##  Mcnemar&#39;s Test P-Value : 1.519e-08       
+##  Mcnemar&#39;s Test P-Value : 3.305e-13       
 ##                                           
-##             Sensitivity : 0.65657         
-##             Specificity : 1.00000         
-##          Pos Pred Value : 1.00000         
-##          Neg Pred Value : 0.99453         
-##              Prevalence : 0.01576         
-##          Detection Rate : 0.01035         
-##    Detection Prevalence : 0.01035         
-##       Balanced Accuracy : 0.82828         
+##             Sensitivity : 0.672619        
+##             Specificity : 1.000000        
+##          Pos Pred Value : 1.000000        
+##          Neg Pred Value : 0.997133        
+##              Prevalence : 0.008705        
+##          Detection Rate : 0.005855        
+##    Detection Prevalence : 0.005855        
+##       Balanced Accuracy : 0.836310        
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ## </code></pre>

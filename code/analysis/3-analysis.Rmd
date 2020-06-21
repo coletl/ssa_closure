@@ -42,9 +42,11 @@ Writes:
 library(coler)
 library(dplyr)
 library(data.table)
+
 library(caret)
 library(randomForest)
 
+library(stargazer)
 ```
 
 ```{r final prep, child = "0-final_prep.Rmd"}
@@ -106,11 +108,112 @@ models$logit.absolute.std <-
       data = absolute_std)
 ```
 
+```{r baseline, results = "asis"}
+logit_absolute <- 
+  list(models$logit.absolute)
 
-```{r results = "asis"}
-stargazer::stargazer(models$logit.absolute, models$logit.absolute.std,
-                     type = "html", column.labels = c("raw", "standardized"))
+outcome_means <- map(logit_absolute, c("data", "closed")) %>% 
+  map( ~ mean(as.numeric(as.character(.x)))) %>% unlist() %>% 
+  round(3)
+
+
+stargazer::stargazer(
+  logit_absolute,
+  
+  # column.labels = c("Original", "Upsampled", "Downsampled"),
+  # ci = TRUE, 
+  # star.cutoffs = c(NULL, NA, NA), se = list(NULL, NA, NA),
+  covariate.labels = c("White population", "Black population", "English proficiency",
+                       "Aggregate income", "Social Security income", "Poverty",
+                       "Seniors", "High school grads", "Population", 
+                       "Computers", "No computer", "Internet", "Service area size", 
+                       "Distance to nearest office", "Number of Census tracts"),
+  
+  add.lines = list(c("Prop. closed", outcome_means[1])),
+  
+  notes = "Standard errors in parentheses. Predictors were scaled by one standard deviation.",
+  notes.append = FALSE, notes.align = "l",
+  
+  omit.stat = c("aic", "ll"), 
+  type = "html",
+  out = "writing/tables/tab_logit.tex"
+  )
 ```
+
+
+```{r bias corrected, results = "asis", eval = FALSE}
+logit_absolute <- 
+  list(models$logit.absolute,
+       brglm::brglm(formula = form_absolute, family = binomial(link = "logit"),
+               data = mutate(absolute_std, closed = as.numeric(as.character(closed)))))
+
+brglm::brglm(formula = form_absolute, family = binomial(link = "logit"),
+               data = mutate(absolute_std, closed = as.numeric(as.character(closed))))
+
+outcome_means <- map(logit_absolute, c("data", "closed")) %>% 
+  map( ~ mean(as.numeric(as.character(.x)))) %>% unlist() %>% 
+  round(3)
+
+
+stargazer::stargazer(
+  logit_absolute,
+  
+  # column.labels = c("Original", "Upsampled", "Downsampled"),
+  # ci = TRUE, 
+  # star.cutoffs = c(NULL, NA, NA), se = list(NULL, NA, NA),
+  covariate.labels = c("White population", "Black population", "English proficiency",
+                       "Aggregate income", "Social Security income", "Poverty",
+                       "Seniors", "High school grads", "Population", 
+                       "Computers", "No computer", "Internet", "Service area size", 
+                       "Distance to nearest office", "Number of Census tracts"),
+  
+  add.lines = list(c("Prop. closed", outcome_means[1])),
+  
+  notes = "Standard errors in parentheses. Predictors were scaled by one standard deviation.",
+  notes.append = FALSE, notes.align = "l",
+  
+  omit.stat = c("aic", "ll"), 
+  type = "html",
+  out = "writing/tables/tab_logit.tex"
+  )
+```
+
+
+
+```{r augment, results = "asis", eval = FALSE}
+logit_absolute <- 
+  list(models$logit.absolute,
+       models$logit.absolute_upsamp,
+       models$logit.absolute_downsamp)
+
+outcome_means <- map(logit_absolute, c("data", "closed")) %>% 
+  map( ~ mean(as.numeric(as.character(.x)))) %>% unlist() %>% 
+  round(3)
+
+
+stargazer::stargazer(
+  logit_absolute,
+  
+  column.labels = c("Original", "Upsampled", "Downsampled"),
+  # ci = TRUE, 
+  star.cutoffs = c(NULL, NA, NA), se = list(NULL, NA, NA),
+  covariate.labels = c("White population", "Black population", "English proficiency",
+                       "Aggregate income", "Social Security income", "Poverty",
+                       "Seniors", "High school grads", "Population", 
+                       "Computers", "No computer", "Internet", "Service area size", 
+                       "Distance to nearest office", "Number of Census tracts"),
+  
+  add.lines = list(c("Prop. closed", outcome_means)),
+  
+  notes = "Standard errors in parentheses. Predictors were scaled by one standard deviation. I omit uncertainty estimates for the up- and downsampled data sets because they are incomparable, and statistical significance there is meaningless.",
+  notes.append = FALSE, notes.align = "l",
+  
+  omit.stat = c("aic", "ll"), 
+  type = "html",
+  out = "writing/tables/tab_logit.tex"
+  )
+```
+
 
 ## Confusion matrix: fitted values
 ```{r}

@@ -2786,7 +2786,7 @@ div.tocify {
 </div>
 
 
-<p>Updated: Jun 20, 2020 at 14:53:19 +04.</p>
+<p>Updated: Jun 21, 2020 at 07:02:20 +04.</p>
 <p>Working directory: <code>/home/ctl277/Dropbox/ssa_closure</code>.</p>
 <p>This script trains models on the raw and augmented data. I report confusion matrices of fitted vs. observed values (dichotomized for logit). For model predictions on raw data, see the next script.</p>
 <p>Reads:</p>
@@ -2838,7 +2838,7 @@ offcompl[ , .(closures = sum(closed),
 <p>Change outcome to factor for classification trees.</p>
 <pre class="r"><code>offcompl$closed &lt;- as.factor(offcompl$closed)</code></pre>
 <p>Remove 2015 data since the closure data seem to run through 2014, despite the SSA stating the data come from 2016.</p>
-<pre class="r"><code>offcompl &lt;- offcompl[year %in% as.character(2010:2014)]</code></pre>
+<pre class="r"><code>offcompl &lt;- offcompl[year %in% as.character(2000:2014)]</code></pre>
 <p>Test with two data sets: per capita and absolute values. I redefine here.</p>
 <pre class="r"><code>absolute &lt;- offcompl
 
@@ -2850,9 +2850,10 @@ vars_absolute &lt;-
     &quot;total_comp17&quot;, &quot;no_comp17&quot;, &quot;total_internet17&quot;,
     
     &quot;area&quot;, &quot;nn_dist&quot;, &quot;num_tracts&quot;
-    )
-
-if(offcompl[ , all.equal(income_ss, income_publass)]) 
+    )</code></pre>
+<p>Check for collinearity between Social Security and public assistance income. Drop if correlation exceeds 0.95.</p>
+<pre class="r"><code>if(offcompl[ , cor(income_ss, income_publass) &gt; 0.95])
+  
   vars_absolute &lt;- setdiff(vars_absolute, &quot;income_publass&quot;)
 
 form_absolute &lt;- reformulate(termlabels = vars_absolute, response = &quot;closed&quot;)</code></pre>
@@ -2875,6 +2876,10 @@ setnames(percap,
 form_percap &lt;- reformulate(termlabels = vars_percap, response = &quot;closed&quot;)</code></pre>
 <p>Some places actually had zero population (interpolated from census tracts).</p>
 <pre class="r"><code>percap &lt;- percap[pop &gt; 0]</code></pre>
+<div id="standardize-absolute-variables" class="section level2">
+<h2>Standardize absolute variables</h2>
+<pre class="r"><code>set_cols(absolute, j = vars_absolute, FUN = scale)</code></pre>
+</div>
 <div id="data-augmentation" class="section level2">
 <h2>Data augmentation</h2>
 <p>Create training sets of augmented data?</p>
@@ -2916,14 +2921,14 @@ percap[ , kluster := as.factor(kmeans_percap$cluster - 1)]</code></pre>
 <h3>Confusion</h3>
 <pre class="r"><code>absolute[ , table(closed, kluster)]</code></pre>
 <pre><code>##       kluster
-## closed    0    1
-##      0 6208   10
-##      1   65    0</code></pre>
+## closed     0     1
+##      0  4718 14508
+##      1    43    70</code></pre>
 <pre class="r"><code>percap[ , table(closed, kluster)]</code></pre>
 <pre><code>##       kluster
-## closed    0    1
-##      0 6213    5
-##      1   65    0</code></pre>
+## closed     0     1
+##      0 19174    12
+##      1   113     0</code></pre>
 </div>
 </div>
 <div id="logistic-regression" class="section level2">
@@ -2963,6 +2968,11 @@ percap[ , kluster := as.factor(kmeans_percap$cluster - 1)]</code></pre>
     )
     
   )</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1
+## occurred
+
+## Warning: glm.fit: fitted probabilities numerically 0 or 1
+## occurred</code></pre>
 </div>
 <div id="elastic-net" class="section level2">
 <h2>Elastic net</h2>
@@ -3055,78 +3065,78 @@ percap[ , kluster := as.factor(kmeans_percap$cluster - 1)]</code></pre>
     ~ .x[ , table(closed, logit_pred)])</code></pre>
 <pre><code>## $absolute
 ##       logit_pred
-## closed    0    1
-##      0 4365 1853
-##      1   28   37
+## closed     0     1
+##      0 12427  6799
+##      1    42    71
 ## 
 ## $absolute_downsamp
 ##       logit_pred
 ## closed  0  1
-##      0 50 15
-##      1 20 45
+##      0 90 23
+##      1 47 66
 ## 
 ## $absolute_upsamp
 ##       logit_pred
-## closed    0    1
-##      0 4492 1726
-##      1 2625 3593</code></pre>
+## closed     0     1
+##      0 13703  5523
+##      1  8004 11222</code></pre>
 <pre class="r"><code>map(absolute_train,
     ~ .x[ , table(closed, RF_pred)])</code></pre>
 <pre><code>## $absolute
 ##       RF_pred
-## closed    0    1
-##      0 6194   24
-##      1   65    0
+## closed     0     1
+##      0 19190    36
+##      1   113     0
 ## 
 ## $absolute_downsamp
 ##       RF_pred
 ## closed  0  1
-##      0 33 32
-##      1 31 34
+##      0 73 40
+##      1 38 75
 ## 
 ## $absolute_upsamp
 ##       RF_pred
-## closed    0    1
-##      0 6173   45
-##      1    0 6218</code></pre>
+## closed     0     1
+##      0 19161    65
+##      1     0 19226</code></pre>
 <pre class="r"><code>map(percap_train,
     ~ .x[ , table(closed, logit_pred)])</code></pre>
 <pre><code>## $percap
 ##       logit_pred
-## closed    0    1
-##      0 4467 1751
-##      1   25   40
+## closed     0     1
+##      0 13956  5230
+##      1    54    59
 ## 
 ## $percap_downsamp
 ##       logit_pred
 ## closed  0  1
-##      0 49 16
-##      1 23 42
+##      0 91 22
+##      1 54 59
 ## 
 ## $percap_upsamp
 ##       logit_pred
-## closed    0    1
-##      0 4481 1737
-##      1 2499 3719</code></pre>
+## closed     0     1
+##      0 14810  4376
+##      1  8879 10307</code></pre>
 <pre class="r"><code>map(percap_train,
     ~ .x[ , table(closed, RF_pred)])</code></pre>
 <pre><code>## $percap
 ##       RF_pred
-## closed    0    1
-##      0 6188   30
-##      1   65    0
+## closed     0     1
+##      0 19134    52
+##      1   113     0
 ## 
 ## $percap_downsamp
 ##       RF_pred
 ## closed  0  1
-##      0 42 23
-##      1 27 38
+##      0 78 35
+##      1 43 70
 ## 
 ## $percap_upsamp
 ##       RF_pred
-## closed    0    1
-##      0 6183   35
-##      1    0 6218</code></pre>
+## closed     0     1
+##      0 19129    57
+##      1     0 19186</code></pre>
 </div>
 <div id="export-models" class="section level1">
 <h1>Export models</h1>
@@ -3136,7 +3146,7 @@ names(mods) &lt;- gsub(&quot;^mods_&quot;, &quot;&quot;, names(mods))
 
 saveRDS(mods, &quot;data/fitted_models.rds&quot;)</code></pre>
 <pre class="r"><code>tictoc::toc()</code></pre>
-<pre><code>## 297.274 sec elapsed</code></pre>
+<pre><code>## 335.887 sec elapsed</code></pre>
 </div>
 
 

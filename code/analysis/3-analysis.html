@@ -2810,7 +2810,7 @@ div.tocify {
 </div>
 
 
-<p>Updated: Jun 20, 2020 at 15:45:10 +04.</p>
+<p>Updated: Jun 21, 2020 at 07:08:10 +04.</p>
 <p>Working directory: <code>/home/ctl277/Dropbox/ssa_closure</code>.</p>
 <p>Reads:</p>
 <ul>
@@ -2825,8 +2825,11 @@ div.tocify {
 <pre class="r"><code>library(coler)
 library(dplyr)
 library(data.table)
+
 library(caret)
-library(randomForest)</code></pre>
+library(randomForest)
+
+library(stargazer)</code></pre>
 </div>
 <div id="final-data-prep" class="section level1">
 <h1>Final data prep</h1>
@@ -2854,7 +2857,7 @@ offcompl[ , .(closures = sum(closed),
 <p>Change outcome to factor for classification trees.</p>
 <pre class="r"><code>offcompl$closed &lt;- as.factor(offcompl$closed)</code></pre>
 <p>Remove 2015 data since the closure data seem to run through 2014, despite the SSA stating the data come from 2016.</p>
-<pre class="r"><code>offcompl &lt;- offcompl[year %in% as.character(2010:2014)]</code></pre>
+<pre class="r"><code>offcompl &lt;- offcompl[year %in% as.character(2000:2014)]</code></pre>
 <p>Test with two data sets: per capita and absolute values. I redefine here.</p>
 <pre class="r"><code>absolute &lt;- offcompl
 
@@ -2866,9 +2869,9 @@ vars_absolute &lt;-
     &quot;total_comp17&quot;, &quot;no_comp17&quot;, &quot;total_internet17&quot;,
     
     &quot;area&quot;, &quot;nn_dist&quot;, &quot;num_tracts&quot;
-    )
-
-if(offcompl[ , all.equal(income_ss, income_publass) | cor(income_ss, income_publass) &gt; 0.95])
+    )</code></pre>
+<p>Check for collinearity between Social Security and public assistance income. Drop if correlation exceeds 0.95.</p>
+<pre class="r"><code>if(offcompl[ , cor(income_ss, income_publass) &gt; 0.95])
   
   vars_absolute &lt;- setdiff(vars_absolute, &quot;income_publass&quot;)
 
@@ -2892,7 +2895,11 @@ setnames(percap,
 form_percap &lt;- reformulate(termlabels = vars_percap, response = &quot;closed&quot;)</code></pre>
 <p>Some places actually had zero population (interpolated from census tracts).</p>
 <pre class="r"><code>percap &lt;- percap[pop &gt; 0]</code></pre>
+<div id="standardize-absolute-variables" class="section level2">
+<h2>Standardize absolute variables</h2>
+<pre class="r"><code>set_cols(absolute, j = vars_absolute, FUN = scale)</code></pre>
 <pre class="r"><code>models &lt;- readRDS(&quot;data/fitted_models.rds&quot;)</code></pre>
+</div>
 </div>
 <div id="balance" class="section level1">
 <h1>Balance</h1>
@@ -2919,215 +2926,602 @@ balDT[order(-abs(statistic))] %&gt;%
   knitr::kable()</code></pre>
 <table>
 <thead>
-<tr class="header">
-<th align="left">variable</th>
-<th align="right">estimate</th>
-<th align="right">mean_closed</th>
-<th align="right">mean_open</th>
-<th align="right">statistic</th>
-<th align="right">p.value</th>
-<th align="right">parameter</th>
-<th align="right">conf.low</th>
-<th align="right">conf.high</th>
-<th align="left">method</th>
-<th align="left">alternative</th>
+<tr>
+<th style="text-align:left;">
+variable
+</th>
+<th style="text-align:right;">
+estimate
+</th>
+<th style="text-align:right;">
+mean_closed
+</th>
+<th style="text-align:right;">
+mean_open
+</th>
+<th style="text-align:right;">
+statistic
+</th>
+<th style="text-align:right;">
+p.value
+</th>
+<th style="text-align:right;">
+parameter
+</th>
+<th style="text-align:right;">
+conf.low
+</th>
+<th style="text-align:right;">
+conf.high
+</th>
+<th style="text-align:left;">
+method
+</th>
+<th style="text-align:left;">
+alternative
+</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td align="left">area</td>
-<td align="right">8.89e+09</td>
-<td align="right">1.74e+10</td>
-<td align="right">8.52e+09</td>
-<td align="right">2.6400</td>
-<td align="right">0.00893</td>
-<td align="right">173.0</td>
-<td align="right">2.25e+09</td>
-<td align="right">1.55e+10</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+area
+</td>
+<td style="text-align:right;">
+0.05170
+</td>
+<td style="text-align:right;">
+3.02e-04
+</td>
+<td style="text-align:right;">
+-0.05140
+</td>
+<td style="text-align:right;">
+4.0300
+</td>
+<td style="text-align:right;">
+7.62e-05
+</td>
+<td style="text-align:right;">
+240
+</td>
+<td style="text-align:right;">
+0.0264
+</td>
+<td style="text-align:right;">
+0.0771
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="even">
-<td align="left">english_imp</td>
-<td align="right">-9.91e+02</td>
-<td align="right">2.06e+03</td>
-<td align="right">3.05e+03</td>
-<td align="right">-2.4900</td>
-<td align="right">0.01540</td>
-<td align="right">65.1</td>
-<td align="right">-1.79e+03</td>
-<td align="right">-1.95e+02</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+income_ss
+</td>
+<td style="text-align:right;">
+0.35700
+</td>
+<td style="text-align:right;">
+2.09e-03
+</td>
+<td style="text-align:right;">
+-0.35500
+</td>
+<td style="text-align:right;">
+3.9700
+</td>
+<td style="text-align:right;">
+1.26e-04
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+0.1790
+</td>
+<td style="text-align:right;">
+0.5350
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="odd">
-<td align="left">income</td>
-<td align="right">-2.06e+09</td>
-<td align="right">7.31e+09</td>
-<td align="right">9.37e+09</td>
-<td align="right">-2.2000</td>
-<td align="right">0.03150</td>
-<td align="right">65.0</td>
-<td align="right">-3.94e+09</td>
-<td align="right">-1.89e+08</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+poverty
+</td>
+<td style="text-align:right;">
+-0.39900
+</td>
+<td style="text-align:right;">
+-2.33e-03
+</td>
+<td style="text-align:right;">
+0.39600
+</td>
+<td style="text-align:right;">
+-3.5900
+</td>
+<td style="text-align:right;">
+4.89e-04
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.6180
+</td>
+<td style="text-align:right;">
+-0.1790
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="even">
-<td align="left">black</td>
-<td align="right">-1.73e+04</td>
-<td align="right">3.31e+04</td>
-<td align="right">5.04e+04</td>
-<td align="right">-2.1400</td>
-<td align="right">0.03620</td>
-<td align="right">64.7</td>
-<td align="right">-3.34e+04</td>
-<td align="right">-1.15e+03</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+seniors
+</td>
+<td style="text-align:right;">
+-0.36700
+</td>
+<td style="text-align:right;">
+-2.15e-03
+</td>
+<td style="text-align:right;">
+0.36500
+</td>
+<td style="text-align:right;">
+-3.4200
+</td>
+<td style="text-align:right;">
+8.59e-04
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.5800
+</td>
+<td style="text-align:right;">
+-0.1550
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="odd">
-<td align="left">income_ss</td>
-<td align="right">-1.34e+04</td>
-<td align="right">9.66e+04</td>
-<td align="right">1.10e+05</td>
-<td align="right">-1.5900</td>
-<td align="right">0.11600</td>
-<td align="right">65.4</td>
-<td align="right">-3.01e+04</td>
-<td align="right">3.38e+03</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+pop
+</td>
+<td style="text-align:right;">
+0.28800
+</td>
+<td style="text-align:right;">
+1.68e-03
+</td>
+<td style="text-align:right;">
+-0.28600
+</td>
+<td style="text-align:right;">
+3.0900
+</td>
+<td style="text-align:right;">
+2.51e-03
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+0.1030
+</td>
+<td style="text-align:right;">
+0.4730
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="even">
-<td align="left">total_comp17</td>
-<td align="right">-1.38e+04</td>
-<td align="right">9.97e+04</td>
-<td align="right">1.13e+05</td>
-<td align="right">-1.5500</td>
-<td align="right">0.12600</td>
-<td align="right">65.4</td>
-<td align="right">-3.15e+04</td>
-<td align="right">3.97e+03</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+black
+</td>
+<td style="text-align:right;">
+-0.42000
+</td>
+<td style="text-align:right;">
+-2.46e-03
+</td>
+<td style="text-align:right;">
+0.41800
+</td>
+<td style="text-align:right;">
+-2.8800
+</td>
+<td style="text-align:right;">
+4.77e-03
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.7100
+</td>
+<td style="text-align:right;">
+-0.1310
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="odd">
-<td align="left">poverty</td>
-<td align="right">-2.81e+04</td>
-<td align="right">2.36e+05</td>
-<td align="right">2.64e+05</td>
-<td align="right">-1.3200</td>
-<td align="right">0.19000</td>
-<td align="right">65.4</td>
-<td align="right">-7.05e+04</td>
-<td align="right">1.43e+04</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+income
+</td>
+<td style="text-align:right;">
+-0.36000
+</td>
+<td style="text-align:right;">
+-2.10e-03
+</td>
+<td style="text-align:right;">
+0.35800
+</td>
+<td style="text-align:right;">
+-2.8500
+</td>
+<td style="text-align:right;">
+5.26e-03
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.6110
+</td>
+<td style="text-align:right;">
+-0.1090
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="even">
-<td align="left">num_tracts</td>
-<td align="right">-5.94e+00</td>
-<td align="right">6.11e+01</td>
-<td align="right">6.70e+01</td>
-<td align="right">-1.3100</td>
-<td align="right">0.19600</td>
-<td align="right">65.8</td>
-<td align="right">-1.50e+01</td>
-<td align="right">3.13e+00</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+english_imp
+</td>
+<td style="text-align:right;">
+-0.28700
+</td>
+<td style="text-align:right;">
+-1.68e-03
+</td>
+<td style="text-align:right;">
+0.28500
+</td>
+<td style="text-align:right;">
+-2.5100
+</td>
+<td style="text-align:right;">
+1.34e-02
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.5130
+</td>
+<td style="text-align:right;">
+-0.0607
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="odd">
-<td align="left">seniors</td>
-<td align="right">-1.36e+04</td>
-<td align="right">1.85e+05</td>
-<td align="right">1.99e+05</td>
-<td align="right">-0.9560</td>
-<td align="right">0.34300</td>
-<td align="right">65.5</td>
-<td align="right">-4.21e+04</td>
-<td align="right">1.48e+04</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+income_publass
+</td>
+<td style="text-align:right;">
+0.16400
+</td>
+<td style="text-align:right;">
+9.57e-04
+</td>
+<td style="text-align:right;">
+-0.16300
+</td>
+<td style="text-align:right;">
+1.7000
+</td>
+<td style="text-align:right;">
+9.14e-02
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.0268
+</td>
+<td style="text-align:right;">
+0.3540
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="even">
-<td align="left">no_comp17</td>
-<td align="right">-7.87e+02</td>
-<td align="right">1.27e+04</td>
-<td align="right">1.35e+04</td>
-<td align="right">-0.8900</td>
-<td align="right">0.37700</td>
-<td align="right">65.4</td>
-<td align="right">-2.55e+03</td>
-<td align="right">9.78e+02</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+educ_hsgrad
+</td>
+<td style="text-align:right;">
+-0.09890
+</td>
+<td style="text-align:right;">
+-5.78e-04
+</td>
+<td style="text-align:right;">
+0.09830
+</td>
+<td style="text-align:right;">
+-0.9440
+</td>
+<td style="text-align:right;">
+3.47e-01
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.3060
+</td>
+<td style="text-align:right;">
+0.1090
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="odd">
-<td align="left">total_internet17</td>
-<td align="right">-8.64e+02</td>
-<td align="right">1.75e+04</td>
-<td align="right">1.83e+04</td>
-<td align="right">-0.7020</td>
-<td align="right">0.48500</td>
-<td align="right">65.5</td>
-<td align="right">-3.32e+03</td>
-<td align="right">1.59e+03</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+num_tracts
+</td>
+<td style="text-align:right;">
+-0.07840
+</td>
+<td style="text-align:right;">
+-4.58e-04
+</td>
+<td style="text-align:right;">
+0.07800
+</td>
+<td style="text-align:right;">
+-0.7600
+</td>
+<td style="text-align:right;">
+4.49e-01
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.2830
+</td>
+<td style="text-align:right;">
+0.1260
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="even">
-<td align="left">pop</td>
-<td align="right">-5.48e+02</td>
-<td align="right">2.03e+04</td>
-<td align="right">2.08e+04</td>
-<td align="right">-0.3740</td>
-<td align="right">0.70900</td>
-<td align="right">65.7</td>
-<td align="right">-3.47e+03</td>
-<td align="right">2.37e+03</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+total_comp17
+</td>
+<td style="text-align:right;">
+-0.06870
+</td>
+<td style="text-align:right;">
+-4.02e-04
+</td>
+<td style="text-align:right;">
+0.06830
+</td>
+<td style="text-align:right;">
+-0.6480
+</td>
+<td style="text-align:right;">
+5.18e-01
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.2790
+</td>
+<td style="text-align:right;">
+0.1410
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="odd">
-<td align="left">nn_dist</td>
-<td align="right">-1.18e+00</td>
-<td align="right">2.43e+01</td>
-<td align="right">2.55e+01</td>
-<td align="right">-0.3650</td>
-<td align="right">0.71600</td>
-<td align="right">65.3</td>
-<td align="right">-7.63e+00</td>
-<td align="right">5.27e+00</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+white
+</td>
+<td style="text-align:right;">
+-0.05400
+</td>
+<td style="text-align:right;">
+-3.16e-04
+</td>
+<td style="text-align:right;">
+0.05370
+</td>
+<td style="text-align:right;">
+-0.5230
+</td>
+<td style="text-align:right;">
+6.02e-01
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.2590
+</td>
+<td style="text-align:right;">
+0.1500
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="even">
-<td align="left">white</td>
-<td align="right">-1.68e+03</td>
-<td align="right">1.91e+05</td>
-<td align="right">1.93e+05</td>
-<td align="right">-0.1040</td>
-<td align="right">0.91800</td>
-<td align="right">65.5</td>
-<td align="right">-3.41e+04</td>
-<td align="right">3.08e+04</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+nn_dist
+</td>
+<td style="text-align:right;">
+0.02710
+</td>
+<td style="text-align:right;">
+1.58e-04
+</td>
+<td style="text-align:right;">
+-0.02690
+</td>
+<td style="text-align:right;">
+0.2880
+</td>
+<td style="text-align:right;">
+7.74e-01
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.1590
+</td>
+<td style="text-align:right;">
+0.2140
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
-<tr class="odd">
-<td align="left">educ_hsgrad</td>
-<td align="right">2.02e+02</td>
-<td align="right">4.84e+04</td>
-<td align="right">4.82e+04</td>
-<td align="right">0.0605</td>
-<td align="right">0.95200</td>
-<td align="right">65.7</td>
-<td align="right">-6.46e+03</td>
-<td align="right">6.87e+03</td>
-<td align="left">Welch Two Sample t-test</td>
-<td align="left">two.sided</td>
+<tr>
+<td style="text-align:left;">
+no_comp17
+</td>
+<td style="text-align:right;">
+-0.02150
+</td>
+<td style="text-align:right;">
+-1.26e-04
+</td>
+<td style="text-align:right;">
+0.02140
+</td>
+<td style="text-align:right;">
+-0.2000
+</td>
+<td style="text-align:right;">
+8.42e-01
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.2340
+</td>
+<td style="text-align:right;">
+0.1910
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+total_internet17
+</td>
+<td style="text-align:right;">
+-0.00982
+</td>
+<td style="text-align:right;">
+-5.74e-05
+</td>
+<td style="text-align:right;">
+0.00976
+</td>
+<td style="text-align:right;">
+-0.0941
+</td>
+<td style="text-align:right;">
+9.25e-01
+</td>
+<td style="text-align:right;">
+113
+</td>
+<td style="text-align:right;">
+-0.2170
+</td>
+<td style="text-align:right;">
+0.1970
+</td>
+<td style="text-align:left;">
+Welch Two Sample t-test
+</td>
+<td style="text-align:left;">
+two.sided
+</td>
 </tr>
 </tbody>
 </table>
@@ -3141,27 +3535,27 @@ absolute[ , confusionMatrix(kluster, reference = closed, positive = &quot;1&quot
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
-## Prediction    0    1
-##          0 6208   65
-##          1   10    0
+## Prediction     0     1
+##          0  4718    43
+##          1 14508    70
 ##                                           
-##                Accuracy : 0.9881          
-##                  95% CI : (0.9851, 0.9906)
-##     No Information Rate : 0.9897          
-##     P-Value [Acc &gt; NIR] : 0.9026          
+##                Accuracy : 0.2476          
+##                  95% CI : (0.2415, 0.2537)
+##     No Information Rate : 0.9942          
+##     P-Value [Acc &gt; NIR] : 1               
 ##                                           
-##                   Kappa : -0.0028         
+##                   Kappa : -0.0021         
 ##                                           
-##  Mcnemar&#39;s Test P-Value : 4.507e-10       
+##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
 ##                                           
-##             Sensitivity : 0.000000        
-##             Specificity : 0.998392        
-##          Pos Pred Value : 0.000000        
-##          Neg Pred Value : 0.989638        
-##              Prevalence : 0.010345        
-##          Detection Rate : 0.000000        
-##    Detection Prevalence : 0.001592        
-##       Balanced Accuracy : 0.499196        
+##             Sensitivity : 0.619469        
+##             Specificity : 0.245397        
+##          Pos Pred Value : 0.004802        
+##          Neg Pred Value : 0.990968        
+##              Prevalence : 0.005843        
+##          Detection Rate : 0.003620        
+##    Detection Prevalence : 0.753814        
+##       Balanced Accuracy : 0.432433        
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
@@ -3178,76 +3572,77 @@ set_cols(absolute_std, j = vars_absolute, FUN = scale)
 models$logit.absolute.std &lt;- 
   glm(formula = form_absolute, family = binomial(link = &quot;logit&quot;), 
       data = absolute_std)</code></pre>
-<pre class="r"><code>stargazer::stargazer(models$logit.absolute, models$logit.absolute.std,
-                     type = &quot;html&quot;, column.labels = c(&quot;raw&quot;, &quot;standardized&quot;))</code></pre>
+<pre class="r"><code>logit_absolute &lt;- 
+  list(models$logit.absolute)
+
+outcome_means &lt;- map(logit_absolute, c(&quot;data&quot;, &quot;closed&quot;)) %&gt;% 
+  map( ~ mean(as.numeric(as.character(.x)))) %&gt;% unlist() %&gt;% 
+  round(3)
+
+
+stargazer::stargazer(
+  logit_absolute,
+  
+  # column.labels = c(&quot;Original&quot;, &quot;Upsampled&quot;, &quot;Downsampled&quot;),
+  # ci = TRUE, 
+  # star.cutoffs = c(NULL, NA, NA), se = list(NULL, NA, NA),
+  covariate.labels = c(&quot;White population&quot;, &quot;Black population&quot;, &quot;English proficiency&quot;,
+                       &quot;Aggregate income&quot;, &quot;Social Security income&quot;, &quot;Poverty&quot;,
+                       &quot;Seniors&quot;, &quot;High school grads&quot;, &quot;Population&quot;, 
+                       &quot;Computers&quot;, &quot;No computer&quot;, &quot;Internet&quot;, &quot;Service area size&quot;, 
+                       &quot;Distance to nearest office&quot;, &quot;Number of Census tracts&quot;),
+  
+  add.lines = list(c(&quot;Prop. closed&quot;, outcome_means[1])),
+  
+  notes = &quot;Standard errors in parentheses. Predictors were scaled by one standard deviation.&quot;,
+  notes.append = FALSE, notes.align = &quot;l&quot;,
+  
+  omit.stat = c(&quot;aic&quot;, &quot;ll&quot;), 
+  type = &quot;html&quot;,
+  out = &quot;writing/tables/tab_logit.tex&quot;
+  )</code></pre>
 <table style="text-align:center">
 <tr>
-<td colspan="3" style="border-bottom: 1px solid black">
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td colspan="2">
-<em>Dependent variable:</em>
-</td>
-</tr>
-<tr>
-<td>
-</td>
 <td colspan="2" style="border-bottom: 1px solid black">
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
-<td colspan="2">
+<td>
+<em>Dependent variable:</em>
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td colspan="1" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
 closed
 </td>
 </tr>
 <tr>
+<td colspan="2" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
 <td style="text-align:left">
+White population
 </td>
 <td>
-raw
-</td>
-<td>
-standardized
+0.260
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(1)
-</td>
-<td>
-(2)
-</td>
-</tr>
-<tr>
-<td colspan="3" style="border-bottom: 1px solid black">
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-white
-</td>
-<td>
-0.00000
-</td>
-<td>
-0.170
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.00001)
-</td>
-<td>
-(0.824)
+(0.573)
 </td>
 </tr>
 <tr>
@@ -3255,28 +3650,20 @@ white
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-black
+Black population
 </td>
 <td>
-0.00001<sup>*</sup>
-</td>
-<td>
-0.541<sup>*</sup>
+0.555<sup>***</sup>
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.00001)
-</td>
-<td>
-(0.293)
+(0.205)
 </td>
 </tr>
 <tr>
@@ -3284,28 +3671,20 @@ black
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-english_imp
+English proficiency
 </td>
 <td>
-0.0002<sup>***</sup>
-</td>
-<td>
-0.529<sup>***</sup>
+0.467<sup>***</sup>
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.0001)
-</td>
-<td>
-(0.200)
+(0.164)
 </td>
 </tr>
 <tr>
@@ -3313,28 +3692,20 @@ english_imp
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-income
+Aggregate income
 </td>
 <td>
--0.000
-</td>
-<td>
--0.154
+0.317
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.000)
-</td>
-<td>
-(0.414)
+(0.245)
 </td>
 </tr>
 <tr>
@@ -3342,28 +3713,20 @@ income
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-income_ss
+Social Security income
 </td>
 <td>
-0.00004
-</td>
-<td>
-2.860
+-0.083
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.00004)
-</td>
-<td>
-(2.730)
+(0.187)
 </td>
 </tr>
 <tr>
@@ -3371,28 +3734,20 @@ income_ss
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-poverty
+Poverty
 </td>
 <td>
--0.00001
-</td>
-<td>
--1.298
+-0.476
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.00001)
-</td>
-<td>
-(1.301)
+(0.525)
 </td>
 </tr>
 <tr>
@@ -3400,28 +3755,20 @@ poverty
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-seniors
+Seniors
 </td>
 <td>
-0.00001
-</td>
-<td>
-0.675
+-0.836
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.00000)
-</td>
-<td>
-(0.480)
+(0.746)
 </td>
 </tr>
 <tr>
@@ -3429,28 +3776,20 @@ seniors
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-educ_hsgrad
+High school grads
 </td>
 <td>
--0.00003<sup>*</sup>
-</td>
-<td>
--0.879<sup>*</sup>
+0.657<sup>*</sup>
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.00002)
-</td>
-<td>
-(0.482)
+(0.340)
 </td>
 </tr>
 <tr>
@@ -3458,28 +3797,20 @@ educ_hsgrad
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-pop
+Population
 </td>
 <td>
--0.00004
-</td>
-<td>
--0.473
+-0.637<sup>**</sup>
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.00004)
-</td>
-<td>
-(0.524)
+(0.324)
 </td>
 </tr>
 <tr>
@@ -3487,28 +3818,20 @@ pop
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-total_comp17
+Computers
 </td>
 <td>
--0.00001
-</td>
-<td>
--0.597
+-0.202
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.00003)
-</td>
-<td>
-(2.424)
+(0.679)
 </td>
 </tr>
 <tr>
@@ -3516,28 +3839,20 @@ total_comp17
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-no_comp17
+No computer
 </td>
 <td>
-0.0002<sup>*</sup>
-</td>
-<td>
-1.756<sup>*</sup>
+0.203
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.0001)
-</td>
-<td>
-(0.954)
+(0.465)
 </td>
 </tr>
 <tr>
@@ -3545,28 +3860,20 @@ no_comp17
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-total_internet17
+Internet
 </td>
 <td>
--0.0002<sup>**</sup>
-</td>
-<td>
--2.151<sup>**</sup>
+1.029
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.0001)
-</td>
-<td>
-(1.048)
+(0.708)
 </td>
 </tr>
 <tr>
@@ -3574,28 +3881,20 @@ total_internet17
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-area
+Service area size
 </td>
 <td>
--0.000
-</td>
-<td>
--0.003
+-1.296
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.000)
-</td>
-<td>
-(0.249)
+(0.796)
 </td>
 </tr>
 <tr>
@@ -3603,34 +3902,45 @@ area
 </td>
 <td>
 </td>
-<td>
-</td>
 </tr>
 <tr>
 <td style="text-align:left">
-nn_dist
+Distance to nearest office
 </td>
 <td>
--0.00004
-</td>
-<td>
--0.001
+-0.116
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.005)
-</td>
-<td>
-(0.127)
+(0.561)
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Number of Census tracts
+</td>
+<td>
+-0.079
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.103)
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
 </td>
 <td>
 </td>
@@ -3640,26 +3950,18 @@ nn_dist
 num_tracts
 </td>
 <td>
--0.016
-</td>
-<td>
--0.666
+-0.193
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.013)
-</td>
-<td>
-(0.556)
+(0.346)
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
-</td>
-<td>
 </td>
 <td>
 </td>
@@ -3669,20 +3971,14 @@ num_tracts
 Constant
 </td>
 <td>
--4.440<sup>***</sup>
-</td>
-<td>
--4.804<sup>***</sup>
+-5.428<sup>***</sup>
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-(0.306)
-</td>
-<td>
-(0.150)
+(0.123)
 </td>
 </tr>
 <tr>
@@ -3690,11 +3986,17 @@ Constant
 </td>
 <td>
 </td>
-<td>
+</tr>
+<tr>
+<td colspan="2" style="border-bottom: 1px solid black">
 </td>
 </tr>
 <tr>
-<td colspan="3" style="border-bottom: 1px solid black">
+<td style="text-align:left">
+Prop. closed
+</td>
+<td>
+0.006
 </td>
 </tr>
 <tr>
@@ -3702,47 +4004,87 @@ Constant
 Observations
 </td>
 <td>
-6,283
-</td>
-<td>
-6,283
+19,339
 </td>
 </tr>
 <tr>
-<td style="text-align:left">
-Log Likelihood
-</td>
-<td>
--343.102
-</td>
-<td>
--343.102
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Akaike Inf. Crit.
-</td>
-<td>
-718.205
-</td>
-<td>
-718.205
-</td>
-</tr>
-<tr>
-<td colspan="3" style="border-bottom: 1px solid black">
+<td colspan="2" style="border-bottom: 1px solid black">
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 <em>Note:</em>
 </td>
-<td colspan="2" style="text-align:right">
-<sup><em></sup>p&lt;0.1; <sup><strong></sup>p&lt;0.05; <sup></strong></em></sup>p&lt;0.01
+<td style="text-align:left">
+Standard errors in parentheses. Predictors were scaled by one standard deviation.
 </td>
 </tr>
 </table>
+<pre class="r"><code>logit_absolute &lt;- 
+  list(models$logit.absolute,
+       brglm::brglm(formula = form_absolute, family = binomial(link = &quot;logit&quot;),
+               data = mutate(absolute_std, closed = as.numeric(as.character(closed)))))
+
+brglm::brglm(formula = form_absolute, family = binomial(link = &quot;logit&quot;),
+               data = mutate(absolute_std, closed = as.numeric(as.character(closed))))
+
+outcome_means &lt;- map(logit_absolute, c(&quot;data&quot;, &quot;closed&quot;)) %&gt;% 
+  map( ~ mean(as.numeric(as.character(.x)))) %&gt;% unlist() %&gt;% 
+  round(3)
+
+
+stargazer::stargazer(
+  logit_absolute,
+  
+  # column.labels = c(&quot;Original&quot;, &quot;Upsampled&quot;, &quot;Downsampled&quot;),
+  # ci = TRUE, 
+  # star.cutoffs = c(NULL, NA, NA), se = list(NULL, NA, NA),
+  covariate.labels = c(&quot;White population&quot;, &quot;Black population&quot;, &quot;English proficiency&quot;,
+                       &quot;Aggregate income&quot;, &quot;Social Security income&quot;, &quot;Poverty&quot;,
+                       &quot;Seniors&quot;, &quot;High school grads&quot;, &quot;Population&quot;, 
+                       &quot;Computers&quot;, &quot;No computer&quot;, &quot;Internet&quot;, &quot;Service area size&quot;, 
+                       &quot;Distance to nearest office&quot;, &quot;Number of Census tracts&quot;),
+  
+  add.lines = list(c(&quot;Prop. closed&quot;, outcome_means[1])),
+  
+  notes = &quot;Standard errors in parentheses. Predictors were scaled by one standard deviation.&quot;,
+  notes.append = FALSE, notes.align = &quot;l&quot;,
+  
+  omit.stat = c(&quot;aic&quot;, &quot;ll&quot;), 
+  type = &quot;html&quot;,
+  out = &quot;writing/tables/tab_logit.tex&quot;
+  )</code></pre>
+<pre class="r"><code>logit_absolute &lt;- 
+  list(models$logit.absolute,
+       models$logit.absolute_upsamp,
+       models$logit.absolute_downsamp)
+
+outcome_means &lt;- map(logit_absolute, c(&quot;data&quot;, &quot;closed&quot;)) %&gt;% 
+  map( ~ mean(as.numeric(as.character(.x)))) %&gt;% unlist() %&gt;% 
+  round(3)
+
+
+stargazer::stargazer(
+  logit_absolute,
+  
+  column.labels = c(&quot;Original&quot;, &quot;Upsampled&quot;, &quot;Downsampled&quot;),
+  # ci = TRUE, 
+  star.cutoffs = c(NULL, NA, NA), se = list(NULL, NA, NA),
+  covariate.labels = c(&quot;White population&quot;, &quot;Black population&quot;, &quot;English proficiency&quot;,
+                       &quot;Aggregate income&quot;, &quot;Social Security income&quot;, &quot;Poverty&quot;,
+                       &quot;Seniors&quot;, &quot;High school grads&quot;, &quot;Population&quot;, 
+                       &quot;Computers&quot;, &quot;No computer&quot;, &quot;Internet&quot;, &quot;Service area size&quot;, 
+                       &quot;Distance to nearest office&quot;, &quot;Number of Census tracts&quot;),
+  
+  add.lines = list(c(&quot;Prop. closed&quot;, outcome_means)),
+  
+  notes = &quot;Standard errors in parentheses. Predictors were scaled by one standard deviation. I omit uncertainty estimates for the up- and downsampled data sets because they are incomparable, and statistical significance there is meaningless.&quot;,
+  notes.append = FALSE, notes.align = &quot;l&quot;,
+  
+  omit.stat = c(&quot;aic&quot;, &quot;ll&quot;), 
+  type = &quot;html&quot;,
+  out = &quot;writing/tables/tab_logit.tex&quot;
+  )</code></pre>
 </div>
 </div>
 <div id="confusion-matrix-fitted-values" class="section level2">
@@ -3760,28 +4102,28 @@ Akaike Inf. Crit.
 ## 
 ##           Reference
 ## Prediction    0    1
-##          0 3122   16
-##          1 3096   49
-##                                           
-##                Accuracy : 0.5047          
-##                  95% CI : (0.4923, 0.5171)
-##     No Information Rate : 0.9897          
-##     P-Value [Acc &gt; NIR] : 1               
-##                                           
-##                   Kappa : 0.0105          
-##                                           
-##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
-##                                           
-##             Sensitivity : 0.753846        
-##             Specificity : 0.502091        
-##          Pos Pred Value : 0.015580        
-##          Neg Pred Value : 0.994901        
-##              Prevalence : 0.010345        
-##          Detection Rate : 0.007799        
-##    Detection Prevalence : 0.500557        
-##       Balanced Accuracy : 0.627968        
-##                                           
-##        &#39;Positive&#39; Class : 1               
+##          0 9596   19
+##          1 9630   94
+##                                          
+##                Accuracy : 0.5011         
+##                  95% CI : (0.494, 0.5081)
+##     No Information Rate : 0.9942         
+##     P-Value [Acc &gt; NIR] : 1              
+##                                          
+##                   Kappa : 0.0076         
+##                                          
+##  Mcnemar&#39;s Test P-Value : &lt;2e-16         
+##                                          
+##             Sensitivity : 0.831858       
+##             Specificity : 0.499116       
+##          Pos Pred Value : 0.009667       
+##          Neg Pred Value : 0.998024       
+##              Prevalence : 0.005843       
+##          Detection Rate : 0.004861       
+##    Detection Prevalence : 0.502818       
+##       Balanced Accuracy : 0.665487       
+##                                          
+##        &#39;Positive&#39; Class : 1              
 ## </code></pre>
 </div>
 </div>
@@ -3792,7 +4134,7 @@ Akaike Inf. Crit.
   arrange(-MeanDecreaseAccuracy)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["variable"],"name":[1],"type":["chr"],"align":["left"]},{"label":["0"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["1"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseAccuracy"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseGini"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"income_ss","2":"0.031166548","3":"-0.032716534","4":"0.030510191","5":"8.614913"},{"1":"poverty","2":"0.028711498","3":"-0.035796336","4":"0.028063332","5":"8.645190"},{"1":"educ_hsgrad","2":"0.024167184","3":"-0.027597572","4":"0.023646809","5":"9.820714"},{"1":"total_comp17","2":"0.019707941","3":"-0.024420217","4":"0.019255910","5":"4.436114"},{"1":"pop","2":"0.018592848","3":"-0.024774669","4":"0.018156013","5":"8.906795"},{"1":"income","2":"0.017926801","3":"-0.020812982","4":"0.017534866","5":"9.292567"},{"1":"white","2":"0.016929821","3":"-0.019581029","4":"0.016562044","5":"9.796405"},{"1":"num_tracts","2":"0.014664394","3":"-0.020988551","4":"0.014303498","5":"4.031161"},{"1":"total_internet17","2":"0.014431909","3":"-0.017499298","4":"0.014105749","5":"4.506593"},{"1":"seniors","2":"0.013558235","3":"-0.016124890","4":"0.013261241","5":"9.460212"},{"1":"no_comp17","2":"0.009534241","3":"-0.013097120","4":"0.009304154","5":"4.455868"},{"1":"english_imp","2":"0.006890764","3":"-0.010211979","4":"0.006719163","5":"9.495933"},{"1":"black","2":"0.005535076","3":"-0.007914170","4":"0.005400359","5":"8.949997"},{"1":"area","2":"0.005517716","3":"-0.010969630","4":"0.005353250","5":"6.472308"},{"1":"nn_dist","2":"0.002945729","3":"-0.004212734","4":"0.002873262","5":"10.325180"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["variable"],"name":[1],"type":["chr"],"align":["left"]},{"label":["0"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["1"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseAccuracy"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseGini"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"income_ss","2":"0.021609753","3":"-0.029347895","4":"0.021311550","5":"15.340311"},{"1":"income_publass","2":"0.019244285","3":"-0.029016112","4":"0.018962289","5":"15.502721"},{"1":"total_comp17","2":"0.016431120","3":"-0.023034897","4":"0.016201351","5":"7.398508"},{"1":"educ_hsgrad","2":"0.016064376","3":"-0.027060625","4":"0.015811442","5":"15.285449"},{"1":"poverty","2":"0.014248548","3":"-0.023065668","4":"0.014031452","5":"14.521998"},{"1":"income","2":"0.012671696","3":"-0.020288161","4":"0.012479823","5":"15.342461"},{"1":"seniors","2":"0.012341478","3":"-0.015044780","4":"0.012182536","5":"14.608311"},{"1":"num_tracts","2":"0.011085439","3":"-0.016828878","4":"0.010920855","5":"6.888457"},{"1":"pop","2":"0.011031123","3":"-0.016597439","4":"0.010870184","5":"14.685490"},{"1":"white","2":"0.011001550","3":"-0.017634837","4":"0.010834547","5":"15.574142"},{"1":"total_internet17","2":"0.009529706","3":"-0.016656462","4":"0.009377577","5":"7.396665"},{"1":"no_comp17","2":"0.008360585","3":"-0.014620752","4":"0.008226629","5":"7.608305"},{"1":"english_imp","2":"0.005105156","3":"-0.009037816","4":"0.005022262","5":"14.977716"},{"1":"black","2":"0.004903432","3":"-0.007858982","4":"0.004828857","5":"15.816794"},{"1":"area","2":"0.004576153","3":"-0.008266913","4":"0.004501173","5":"8.870973"},{"1":"nn_dist","2":"0.001627889","3":"-0.004016680","4":"0.001595231","5":"16.845978"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <div id="confusion-matrix" class="section level2">
@@ -3808,27 +4150,27 @@ confusionMatrix(predict(models$RF.absolute, newdata = absolute),
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
-## Prediction    0    1
-##          0 6218   20
-##          1    0   45
+## Prediction     0     1
+##          0 19226    39
+##          1     0    74
 ##                                           
-##                Accuracy : 0.9968          
-##                  95% CI : (0.9951, 0.9981)
-##     No Information Rate : 0.9897          
-##     P-Value [Acc &gt; NIR] : 5.339e-11       
+##                Accuracy : 0.998           
+##                  95% CI : (0.9972, 0.9986)
+##     No Information Rate : 0.9942          
+##     P-Value [Acc &gt; NIR] : 6.366e-16       
 ##                                           
-##                   Kappa : 0.8166          
+##                   Kappa : 0.7905          
 ##                                           
-##  Mcnemar&#39;s Test P-Value : 2.152e-05       
+##  Mcnemar&#39;s Test P-Value : 1.166e-09       
 ##                                           
-##             Sensitivity : 0.692308        
+##             Sensitivity : 0.654867        
 ##             Specificity : 1.000000        
 ##          Pos Pred Value : 1.000000        
-##          Neg Pred Value : 0.996794        
-##              Prevalence : 0.010345        
-##          Detection Rate : 0.007162        
-##    Detection Prevalence : 0.007162        
-##       Balanced Accuracy : 0.846154        
+##          Neg Pred Value : 0.997976        
+##              Prevalence : 0.005843        
+##          Detection Rate : 0.003826        
+##    Detection Prevalence : 0.003826        
+##       Balanced Accuracy : 0.827434        
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
@@ -3844,29 +4186,29 @@ confusionMatrix(models$RF.absolute$predicted,
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
-## Prediction    0    1
-##          0 6194   65
-##          1   24    0
-##                                           
-##                Accuracy : 0.9858          
-##                  95% CI : (0.9826, 0.9886)
-##     No Information Rate : 0.9897          
-##     P-Value [Acc &gt; NIR] : 0.9982          
-##                                           
-##                   Kappa : -0.0056         
-##                                           
-##  Mcnemar&#39;s Test P-Value : 2.235e-05       
-##                                           
-##             Sensitivity : 0.00000         
-##             Specificity : 0.99614         
-##          Pos Pred Value : 0.00000         
-##          Neg Pred Value : 0.98961         
-##              Prevalence : 0.01035         
-##          Detection Rate : 0.00000         
-##    Detection Prevalence : 0.00382         
-##       Balanced Accuracy : 0.49807         
-##                                           
-##        &#39;Positive&#39; Class : 1               
+## Prediction     0     1
+##          0 19190   113
+##          1    36     0
+##                                          
+##                Accuracy : 0.9923         
+##                  95% CI : (0.991, 0.9935)
+##     No Information Rate : 0.9942         
+##     P-Value [Acc &gt; NIR] : 0.9995         
+##                                          
+##                   Kappa : -0.0028        
+##                                          
+##  Mcnemar&#39;s Test P-Value : 4.78e-10       
+##                                          
+##             Sensitivity : 0.000000       
+##             Specificity : 0.998128       
+##          Pos Pred Value : 0.000000       
+##          Neg Pred Value : 0.994146       
+##              Prevalence : 0.005843       
+##          Detection Rate : 0.000000       
+##    Detection Prevalence : 0.001862       
+##       Balanced Accuracy : 0.499064       
+##                                          
+##        &#39;Positive&#39; Class : 1              
 ## </code></pre>
 </div>
 </div>

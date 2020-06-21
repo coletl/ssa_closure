@@ -177,7 +177,7 @@ mods_logit <-
 
 Cutoff value is mean of outcome in sample.
 
-```{r elastic net}
+```{r elastic net, eval = FALSE}
 mods_elnet <- 
   c(
     lapply(absolute_train, 
