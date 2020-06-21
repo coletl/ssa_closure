@@ -2810,7 +2810,7 @@ div.tocify {
 </div>
 
 
-<p>Updated: Jun 21, 2020 at 08:57:48 +04.</p>
+<p>Updated: Jun 21, 2020 at 10:54:01 +04.</p>
 <p>Working directory: <code>/home/ctl277/Dropbox/ssa_closure</code>.</p>
 <p>Reads:</p>
 <ul>
@@ -3169,26 +3169,26 @@ absolute[ , confusionMatrix(kluster, reference = closed, positive = &quot;1&quot
 ## 
 ##           Reference
 ## Prediction     0     1
-##          0 14508    70
-##          1  4718    43
+##          0  4718    43
+##          1 14508    70
 ##                                           
-##                Accuracy : 0.7524          
-##                  95% CI : (0.7463, 0.7585)
+##                Accuracy : 0.2476          
+##                  95% CI : (0.2415, 0.2537)
 ##     No Information Rate : 0.9942          
 ##     P-Value [Acc &gt; NIR] : 1               
 ##                                           
-##                   Kappa : 0.0063          
+##                   Kappa : -0.0021         
 ##                                           
 ##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
 ##                                           
-##             Sensitivity : 0.380531        
-##             Specificity : 0.754603        
-##          Pos Pred Value : 0.009032        
-##          Neg Pred Value : 0.995198        
+##             Sensitivity : 0.619469        
+##             Specificity : 0.245397        
+##          Pos Pred Value : 0.004802        
+##          Neg Pred Value : 0.990968        
 ##              Prevalence : 0.005843        
-##          Detection Rate : 0.002223        
-##    Detection Prevalence : 0.246186        
-##       Balanced Accuracy : 0.567567        
+##          Detection Rate : 0.003620        
+##    Detection Prevalence : 0.753814        
+##       Balanced Accuracy : 0.432433        
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
@@ -3221,22 +3221,29 @@ stargazer::stargazer(
   column.labels = c(&quot;Original&quot;, &quot;Upsampled&quot;, &quot;Downsampled&quot;),
   # ci = TRUE, 
   star.cutoffs = c(NULL, NA, NA), se = list(NULL, NA, NA),
-  covariate.labels = c(&quot;White population&quot;, &quot;Black population&quot;, &quot;English proficiency&quot;,
+  covariate.labels = c(&quot;Constant&quot;, 
+                       &quot;White population&quot;, &quot;Black population&quot;, &quot;English proficiency&quot;,
                        &quot;Aggregate income&quot;, &quot;Social Security income&quot;, &quot;Poverty&quot;,
                        &quot;Seniors&quot;, &quot;High school grads&quot;, &quot;Population&quot;, 
                        &quot;Computers&quot;, &quot;No computer&quot;, &quot;Internet&quot;, &quot;Service area size&quot;, 
                        &quot;Distance to nearest office&quot;, &quot;Number of Census tracts&quot;),
   
   add.lines = list(c(&quot;Prop. closed&quot;, outcome_means)),
+  dep.var.labels = &quot;Office closed&quot;,
   
-  notes = &quot;Standard errors in parentheses. Predictors were scaled by one standard deviation. I omit uncertainty estimates for the up- and downsampled data sets because they are incomparable, and statistical significance there is meaningless.&quot;,
-  notes.append = FALSE, notes.align = &quot;l&quot;,
+  # notes = &quot;Standard errors in parentheses. Predictors were scaled by one standard deviation. I omit uncertainty estimates for the up- and downsampled data sets because they are incomparable, and statistical significance there is meaningless.&quot;,
+  notes = &quot;&quot;,
+  notes.append = FALSE,
+  title = &quot;Conditional expectations of office closure&quot;,
   
   omit.stat = c(&quot;aic&quot;, &quot;ll&quot;), 
-  type = &quot;html&quot;,
+  type = &quot;html&quot;, font.size = &quot;footnotesize&quot;,
   out = &quot;writing/tables/tab_logit.tex&quot;
   )</code></pre>
 <table style="text-align:center">
+<caption>
+<strong>Conditional expectations of office closure</strong>
+</caption>
 <tr>
 <td colspan="4" style="border-bottom: 1px solid black">
 </td>
@@ -3258,7 +3265,7 @@ stargazer::stargazer(
 <td style="text-align:left">
 </td>
 <td colspan="3">
-closed
+Office closed
 </td>
 </tr>
 <tr>
@@ -3293,7 +3300,7 @@ Downsampled
 </tr>
 <tr>
 <td style="text-align:left">
-White population
+Constant
 </td>
 <td>
 0.260
@@ -3328,7 +3335,7 @@ White population
 </tr>
 <tr>
 <td style="text-align:left">
-Black population
+White population
 </td>
 <td>
 0.555
@@ -3363,7 +3370,7 @@ Black population
 </tr>
 <tr>
 <td style="text-align:left">
-English proficiency
+Black population
 </td>
 <td>
 0.467
@@ -3398,7 +3405,7 @@ English proficiency
 </tr>
 <tr>
 <td style="text-align:left">
-Aggregate income
+English proficiency
 </td>
 <td>
 0.317
@@ -3433,7 +3440,7 @@ Aggregate income
 </tr>
 <tr>
 <td style="text-align:left">
-Social Security income
+Aggregate income
 </td>
 <td>
 -0.083
@@ -3468,7 +3475,7 @@ Social Security income
 </tr>
 <tr>
 <td style="text-align:left">
-Poverty
+Social Security income
 </td>
 <td>
 -0.476
@@ -3503,7 +3510,7 @@ Poverty
 </tr>
 <tr>
 <td style="text-align:left">
-Seniors
+Poverty
 </td>
 <td>
 -0.836
@@ -3538,7 +3545,7 @@ Seniors
 </tr>
 <tr>
 <td style="text-align:left">
-High school grads
+Seniors
 </td>
 <td>
 0.657
@@ -3573,7 +3580,7 @@ High school grads
 </tr>
 <tr>
 <td style="text-align:left">
-Population
+High school grads
 </td>
 <td>
 -0.637
@@ -3608,7 +3615,7 @@ Population
 </tr>
 <tr>
 <td style="text-align:left">
-Computers
+Population
 </td>
 <td>
 -0.202
@@ -3643,7 +3650,7 @@ Computers
 </tr>
 <tr>
 <td style="text-align:left">
-No computer
+Computers
 </td>
 <td>
 0.203
@@ -3678,7 +3685,7 @@ No computer
 </tr>
 <tr>
 <td style="text-align:left">
-Internet
+No computer
 </td>
 <td>
 1.029
@@ -3713,7 +3720,7 @@ Internet
 </tr>
 <tr>
 <td style="text-align:left">
-Service area size
+Internet
 </td>
 <td>
 -1.296
@@ -3748,7 +3755,7 @@ Service area size
 </tr>
 <tr>
 <td style="text-align:left">
-Distance to nearest office
+Service area size
 </td>
 <td>
 -0.116
@@ -3783,7 +3790,7 @@ Distance to nearest office
 </tr>
 <tr>
 <td style="text-align:left">
-Number of Census tracts
+Distance to nearest office
 </td>
 <td>
 -0.079
@@ -3818,7 +3825,7 @@ Number of Census tracts
 </tr>
 <tr>
 <td style="text-align:left">
-num_tracts
+Number of Census tracts
 </td>
 <td>
 -0.193
@@ -3926,8 +3933,7 @@ Observations
 <td style="text-align:left">
 <em>Note:</em>
 </td>
-<td colspan="3" style="text-align:left">
-Standard errors in parentheses. Predictors were scaled by one standard deviation. I omit uncertainty estimates for the up- and downsampled data sets because they are incomparable, and statistical significance there is meaningless.
+<td colspan="3" style="text-align:right">
 </td>
 </tr>
 </table>
@@ -4057,6 +4063,10 @@ Standard errors in parentheses. Predictors were scaled by one standard deviation
 </div>
 <div id="random-forest" class="section level1">
 <h1>Random forest</h1>
+<div id="variable-importance" class="section level2 tabset">
+<h2>Variable importance</h2>
+<div id="original-sample-1" class="section level3">
+<h3>Original sample</h3>
 <pre class="r"><code>models$RF.absolute$importance %&gt;% 
   as_tibble(rownames = &quot;variable&quot;) %&gt;% 
   arrange(-MeanDecreaseAccuracy)</code></pre>
@@ -4065,10 +4075,34 @@ Standard errors in parentheses. Predictors were scaled by one standard deviation
 {"columns":[{"label":["variable"],"name":[1],"type":["chr"],"align":["left"]},{"label":["0"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["1"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseAccuracy"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseGini"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"income_ss","2":"0.021609753","3":"-0.029347895","4":"0.021311550","5":"15.340311"},{"1":"income_publass","2":"0.019244285","3":"-0.029016112","4":"0.018962289","5":"15.502721"},{"1":"total_comp17","2":"0.016431120","3":"-0.023034897","4":"0.016201351","5":"7.398508"},{"1":"educ_hsgrad","2":"0.016064376","3":"-0.027060625","4":"0.015811442","5":"15.285449"},{"1":"poverty","2":"0.014248548","3":"-0.023065668","4":"0.014031452","5":"14.521998"},{"1":"income","2":"0.012671696","3":"-0.020288161","4":"0.012479823","5":"15.342461"},{"1":"seniors","2":"0.012341478","3":"-0.015044780","4":"0.012182536","5":"14.608311"},{"1":"num_tracts","2":"0.011085439","3":"-0.016828878","4":"0.010920855","5":"6.888457"},{"1":"pop","2":"0.011031123","3":"-0.016597439","4":"0.010870184","5":"14.685490"},{"1":"white","2":"0.011001550","3":"-0.017634837","4":"0.010834547","5":"15.574142"},{"1":"total_internet17","2":"0.009529706","3":"-0.016656462","4":"0.009377577","5":"7.396665"},{"1":"no_comp17","2":"0.008360585","3":"-0.014620752","4":"0.008226629","5":"7.608305"},{"1":"english_imp","2":"0.005105156","3":"-0.009037816","4":"0.005022262","5":"14.977716"},{"1":"black","2":"0.004903432","3":"-0.007858982","4":"0.004828857","5":"15.816794"},{"1":"area","2":"0.004576153","3":"-0.008266913","4":"0.004501173","5":"8.870973"},{"1":"nn_dist","2":"0.001627889","3":"-0.004016680","4":"0.001595231","5":"16.845978"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
+</div>
+<div id="upsampled" class="section level3">
+<h3>Upsampled</h3>
+<pre class="r"><code>models$RF.absolute_upsamp$importance %&gt;% 
+  as_tibble(rownames = &quot;variable&quot;) %&gt;% 
+  arrange(-MeanDecreaseAccuracy)</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["variable"],"name":[1],"type":["chr"],"align":["left"]},{"label":["0"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["1"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseAccuracy"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseGini"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"area","2":"4.055000e-03","3":"0.4776534","4":"0.2408109","5":"1834.6326"},{"1":"english_imp","2":"8.298897e-05","3":"0.4494412","4":"0.2247237","5":"1267.4347"},{"1":"income_publass","2":"2.092644e-03","3":"0.4108750","4":"0.2064482","5":"1667.7008"},{"1":"seniors","2":"2.667942e-03","3":"0.4032972","4":"0.2029200","5":"1088.8815"},{"1":"pop","2":"8.505074e-04","3":"0.4028335","4":"0.2017987","5":"1372.8510"},{"1":"black","2":"2.112872e-03","3":"0.3666938","4":"0.1843576","5":"1485.4614"},{"1":"income_ss","2":"2.299373e-03","3":"0.3640422","4":"0.1831212","5":"1239.8339"},{"1":"total_comp17","2":"6.339185e-04","3":"0.3622227","4":"0.1813712","5":"1138.0528"},{"1":"income","2":"1.435211e-03","3":"0.3563382","4":"0.1788586","5":"1005.9666"},{"1":"poverty","2":"1.563372e-03","3":"0.3442960","4":"0.1728927","5":"1075.0010"},{"1":"white","2":"2.437074e-03","3":"0.3406534","4":"0.1715041","5":"1132.6331"},{"1":"educ_hsgrad","2":"2.126560e-03","3":"0.3151046","4":"0.1585847","5":"948.3280"},{"1":"total_internet17","2":"1.426777e-03","3":"0.2959899","4":"0.1486748","5":"1160.5148"},{"1":"num_tracts","2":"1.507897e-03","3":"0.2848295","4":"0.1431398","5":"908.7252"},{"1":"no_comp17","2":"1.470721e-03","3":"0.2726079","4":"0.1370139","5":"966.4039"},{"1":"nn_dist","2":"2.135681e-03","3":"0.2503039","4":"0.1261923","5":"884.1713"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<div id="downsampled" class="section level3">
+<h3>Downsampled</h3>
+<pre class="r"><code>models$RF.absolute_downsamp$importance %&gt;% 
+  as_tibble(rownames = &quot;variable&quot;) %&gt;% 
+  arrange(-MeanDecreaseAccuracy)</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["variable"],"name":[1],"type":["chr"],"align":["left"]},{"label":["0"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["1"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseAccuracy"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["MeanDecreaseGini"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"area","2":"0.0145943293","3":"0.0294193640","4":"0.021884837","5":"12.519848"},{"1":"income_publass","2":"0.0186081407","3":"0.0240018077","4":"0.020904296","5":"9.534830"},{"1":"poverty","2":"0.0063965100","3":"0.0233326209","4":"0.014865898","5":"7.460219"},{"1":"seniors","2":"0.0045855285","3":"0.0170537624","4":"0.010787491","5":"6.854502"},{"1":"english_imp","2":"-0.0084697428","3":"0.0282794633","4":"0.009754252","5":"8.328386"},{"1":"black","2":"-0.0056274874","3":"0.0241828531","4":"0.009450564","5":"7.652326"},{"1":"income_ss","2":"0.0096690614","3":"0.0089831697","4":"0.009198235","5":"6.715112"},{"1":"total_comp17","2":"-0.0101987558","3":"0.0261851451","4":"0.008003897","5":"6.322961"},{"1":"income","2":"0.0024081860","3":"0.0123393716","4":"0.007400980","5":"5.555881"},{"1":"total_internet17","2":"-0.0027796858","3":"0.0156560605","4":"0.006350413","5":"7.059813"},{"1":"no_comp17","2":"-0.0071400576","3":"0.0153500845","4":"0.004143708","5":"6.356087"},{"1":"num_tracts","2":"-0.0014917799","3":"0.0090414101","4":"0.003650512","5":"5.344095"},{"1":"pop","2":"0.0044787345","3":"0.0034257607","4":"0.003586705","5":"6.782969"},{"1":"white","2":"0.0049241029","3":"0.0002188372","4":"0.002418311","5":"5.480258"},{"1":"educ_hsgrad","2":"0.0067131909","3":"-0.0036036390","4":"0.001417332","5":"5.226702"},{"1":"nn_dist","2":"0.0009604324","3":"-0.0038287067","4":"-0.001460306","5":"5.299808"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
 <div id="confusion-matrix" class="section level2">
 <h2>Confusion matrix</h2>
 <p>Full versions of the output in 2-eval script.</p>
-<div id="original-sample-1" class="section level3">
+<div id="original-sample-2" class="section level3">
 <h3>Original sample</h3>
 <pre class="r"><code>confusionMatrix(predict(models$RF.absolute, newdata = absolute),
   
@@ -4162,28 +4196,28 @@ Standard errors in parentheses. Predictors were scaled by one standard deviation
 ## 
 ##           Reference
 ## Prediction     0     1
-##          0 11455     0
-##          1  7771   113
-##                                           
-##                Accuracy : 0.5982          
-##                  95% CI : (0.5912, 0.6051)
-##     No Information Rate : 0.9942          
-##     P-Value [Acc &gt; NIR] : 1               
-##                                           
-##                   Kappa : 0.0169          
-##                                           
-##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
-##                                           
-##             Sensitivity : 1.000000        
-##             Specificity : 0.595808        
-##          Pos Pred Value : 0.014333        
-##          Neg Pred Value : 1.000000        
-##              Prevalence : 0.005843        
-##          Detection Rate : 0.005843        
-##    Detection Prevalence : 0.407674        
-##       Balanced Accuracy : 0.797904        
-##                                           
-##        &#39;Positive&#39; Class : 1               
+##          0 11453     0
+##          1  7773   113
+##                                          
+##                Accuracy : 0.5981         
+##                  95% CI : (0.5911, 0.605)
+##     No Information Rate : 0.9942         
+##     P-Value [Acc &gt; NIR] : 1              
+##                                          
+##                   Kappa : 0.0169         
+##                                          
+##  Mcnemar&#39;s Test P-Value : &lt;2e-16         
+##                                          
+##             Sensitivity : 1.000000       
+##             Specificity : 0.595704       
+##          Pos Pred Value : 0.014329       
+##          Neg Pred Value : 1.000000       
+##              Prevalence : 0.005843       
+##          Detection Rate : 0.005843       
+##    Detection Prevalence : 0.407777       
+##       Balanced Accuracy : 0.797852       
+##                                          
+##        &#39;Positive&#39; Class : 1              
 ## </code></pre>
 <pre class="r"><code>models$RF.absolute_downsamp</code></pre>
 <pre><code>## 
@@ -4215,7 +4249,7 @@ test &lt;- sample_frac(absolute, 0.20)
 train &lt;- setdiff(absolute, test)</code></pre>
 <div id="logit-1" class="section level2 tabset">
 <h2>Logit</h2>
-<div id="original-sample-2" class="section level3">
+<div id="original-sample-3" class="section level3">
 <h3>Original sample</h3>
 <pre class="r"><code>logit &lt;- glm(data = train, 
              formula = form_absolute, 
@@ -4423,31 +4457,60 @@ map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test),
 ## 
 ##           Reference
 ## Prediction    0    1
-##          0 3837   10
+##          0 3840    7
 ##          1   21    0
 ##                                           
-##                Accuracy : 0.992           
-##                  95% CI : (0.9886, 0.9945)
-##     No Information Rate : 0.9974          
+##                Accuracy : 0.9928          
+##                  95% CI : (0.9896, 0.9952)
+##     No Information Rate : 0.9982          
 ##     P-Value [Acc &gt; NIR] : 1.00000         
 ##                                           
-##                   Kappa : -0.0035         
+##                   Kappa : -0.0027         
 ##                                           
-##  Mcnemar&#39;s Test P-Value : 0.07249         
+##  Mcnemar&#39;s Test P-Value : 0.01402         
 ##                                           
 ##             Sensitivity : 0.000000        
-##             Specificity : 0.994557        
+##             Specificity : 0.994561        
 ##          Pos Pred Value : 0.000000        
-##          Neg Pred Value : 0.997401        
-##              Prevalence : 0.002585        
+##          Neg Pred Value : 0.998180        
+##              Prevalence : 0.001810        
 ##          Detection Rate : 0.000000        
 ##    Detection Prevalence : 0.005429        
-##       Balanced Accuracy : 0.497278        
+##       Balanced Accuracy : 0.497280        
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ##                                           
 ## 
 ## $`6`
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 3838    9
+##          1   21    0
+##                                           
+##                Accuracy : 0.9922          
+##                  95% CI : (0.9889, 0.9948)
+##     No Information Rate : 0.9977          
+##     P-Value [Acc &gt; NIR] : 1.00000         
+##                                           
+##                   Kappa : -0.0033         
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.04461         
+##                                           
+##             Sensitivity : 0.000000        
+##             Specificity : 0.994558        
+##          Pos Pred Value : 0.000000        
+##          Neg Pred Value : 0.997661        
+##              Prevalence : 0.002327        
+##          Detection Rate : 0.000000        
+##    Detection Prevalence : 0.005429        
+##       Balanced Accuracy : 0.497279        
+##                                           
+##        &#39;Positive&#39; Class : 1               
+##                                           
+## 
+## $`7`
 ## Confusion Matrix and Statistics
 ## 
 ##           Reference
@@ -4476,60 +4539,31 @@ map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test),
 ##        &#39;Positive&#39; Class : 1              
 ##                                          
 ## 
-## $`7`
-## Confusion Matrix and Statistics
-## 
-##           Reference
-## Prediction    0    1
-##          0 3838    9
-##          1   21    0
-##                                           
-##                Accuracy : 0.9922          
-##                  95% CI : (0.9889, 0.9948)
-##     No Information Rate : 0.9977          
-##     P-Value [Acc &gt; NIR] : 1.00000         
-##                                           
-##                   Kappa : -0.0033         
-##                                           
-##  Mcnemar&#39;s Test P-Value : 0.04461         
-##                                           
-##             Sensitivity : 0.000000        
-##             Specificity : 0.994558        
-##          Pos Pred Value : 0.000000        
-##          Neg Pred Value : 0.997661        
-##              Prevalence : 0.002327        
-##          Detection Rate : 0.000000        
-##    Detection Prevalence : 0.005429        
-##       Balanced Accuracy : 0.497279        
-##                                           
-##        &#39;Positive&#39; Class : 1               
-##                                           
-## 
 ## $`8`
 ## Confusion Matrix and Statistics
 ## 
 ##           Reference
 ## Prediction    0    1
-##          0 3838    9
+##          0 3837   10
 ##          1   21    0
 ##                                           
-##                Accuracy : 0.9922          
-##                  95% CI : (0.9889, 0.9948)
-##     No Information Rate : 0.9977          
+##                Accuracy : 0.992           
+##                  95% CI : (0.9886, 0.9945)
+##     No Information Rate : 0.9974          
 ##     P-Value [Acc &gt; NIR] : 1.00000         
 ##                                           
-##                   Kappa : -0.0033         
+##                   Kappa : -0.0035         
 ##                                           
-##  Mcnemar&#39;s Test P-Value : 0.04461         
+##  Mcnemar&#39;s Test P-Value : 0.07249         
 ##                                           
 ##             Sensitivity : 0.000000        
-##             Specificity : 0.994558        
+##             Specificity : 0.994557        
 ##          Pos Pred Value : 0.000000        
-##          Neg Pred Value : 0.997661        
-##              Prevalence : 0.002327        
+##          Neg Pred Value : 0.997401        
+##              Prevalence : 0.002585        
 ##          Detection Rate : 0.000000        
 ##    Detection Prevalence : 0.005429        
-##       Balanced Accuracy : 0.497279        
+##       Balanced Accuracy : 0.497278        
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ## </code></pre>

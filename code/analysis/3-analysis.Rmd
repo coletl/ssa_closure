@@ -208,19 +208,23 @@ stargazer::stargazer(
   column.labels = c("Original", "Upsampled", "Downsampled"),
   # ci = TRUE, 
   star.cutoffs = c(NULL, NA, NA), se = list(NULL, NA, NA),
-  covariate.labels = c("White population", "Black population", "English proficiency",
+  covariate.labels = c("Constant", 
+                       "White population", "Black population", "English proficiency",
                        "Aggregate income", "Social Security income", "Poverty",
                        "Seniors", "High school grads", "Population", 
                        "Computers", "No computer", "Internet", "Service area size", 
                        "Distance to nearest office", "Number of Census tracts"),
   
   add.lines = list(c("Prop. closed", outcome_means)),
+  dep.var.labels = "Office closed",
   
-  notes = "Standard errors in parentheses. Predictors were scaled by one standard deviation. I omit uncertainty estimates for the up- and downsampled data sets because they are incomparable, and statistical significance there is meaningless.",
-  notes.append = FALSE, notes.align = "l",
+  # notes = "Standard errors in parentheses. Predictors were scaled by one standard deviation. I omit uncertainty estimates for the up- and downsampled data sets because they are incomparable, and statistical significance there is meaningless.",
+  notes = "",
+  notes.append = FALSE,
+  title = "Conditional expectations of office closure",
   
   omit.stat = c("aic", "ll"), 
-  type = "html",
+  type = "html", font.size = "footnotesize",
   out = "writing/tables/tab_logit.tex"
   )
 ```
@@ -275,8 +279,25 @@ confusionMatrix(
 
 # Random forest
 
+## Variable importance {.tabset}
+
+### Original sample
 ```{r}
 models$RF.absolute$importance %>% 
+  as_tibble(rownames = "variable") %>% 
+  arrange(-MeanDecreaseAccuracy)
+```
+
+### Upsampled
+```{r}
+models$RF.absolute_upsamp$importance %>% 
+  as_tibble(rownames = "variable") %>% 
+  arrange(-MeanDecreaseAccuracy)
+```
+
+### Downsampled
+```{r}
+models$RF.absolute_downsamp$importance %>% 
   as_tibble(rownames = "variable") %>% 
   arrange(-MeanDecreaseAccuracy)
 ```
