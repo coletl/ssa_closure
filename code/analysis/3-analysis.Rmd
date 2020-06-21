@@ -261,28 +261,26 @@ confusionMatrix(models$RF.absolute$predicted,
 ```
 
 # Out-of-sample prediction
-Terrible. Zero true positives.
 
-```{r eval = FALSE, include = FALSE}
+```{r}
 set.seed(575)
 test <- sample_frac(absolute, 0.20)
 train <- setdiff(absolute, test)
 ```
 
-```{r eval = FALSE, include = FALSE}
-## FAILS TO PREDICT ANY CLOSURES IN TEST SET
+```{r}
+logit <- glm(data = train, 
+             formula = form_absolute, 
+             family = binomial(link = "logit"))
 
-logit <- glm(data = train, formula = form_absolute, family = binomial(link = "logit"))
+mean_out_train <- train[ , mean(as.numeric(as.character(closed)))]
 
 test[ , caret::confusionMatrix(closed, 
                                predict(logit, newdata = test, type = "response") %>% 
-                                 {as.numeric(. > 0.5)} %>% as.factor())]$table
-
-predict(logit, newdata = test, type = "response") %>% 
-                                 {as.numeric(. > 0.5)} %>% table()
+                                 cutoff(threshold = mean_out_train))]
 ```
 
-```{r eval = FALSE, include = FALSE}
+```{r}
 mtries <- 3:8
 mods <- 
   parallel::mclapply(mtries,
@@ -291,7 +289,7 @@ mods <-
                                     y = train[ , closed], mtry = mtry),
                      mc.cores = length(mtries))
 
-map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test))]$table) %>% 
+map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test))]) %>% 
   setNames(mtries)
 ```
 

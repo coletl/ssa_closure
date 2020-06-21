@@ -2810,7 +2810,7 @@ div.tocify {
 </div>
 
 
-<p>Updated: Jun 21, 2020 at 07:08:10 +04.</p>
+<p>Updated: Jun 21, 2020 at 07:37:46 +04.</p>
 <p>Working directory: <code>/home/ctl277/Dropbox/ssa_closure</code>.</p>
 <p>Reads:</p>
 <ul>
@@ -2895,8 +2895,8 @@ setnames(percap,
 form_percap &lt;- reformulate(termlabels = vars_percap, response = &quot;closed&quot;)</code></pre>
 <p>Some places actually had zero population (interpolated from census tracts).</p>
 <pre class="r"><code>percap &lt;- percap[pop &gt; 0]</code></pre>
-<div id="standardize-absolute-variables" class="section level2">
-<h2>Standardize absolute variables</h2>
+<div id="standardize-absolutes-predictors" class="section level2">
+<h2>Standardize absolute’s predictors</h2>
 <pre class="r"><code>set_cols(absolute, j = vars_absolute, FUN = scale)</code></pre>
 <pre class="r"><code>models &lt;- readRDS(&quot;data/fitted_models.rds&quot;)</code></pre>
 </div>
@@ -2926,602 +2926,228 @@ balDT[order(-abs(statistic))] %&gt;%
   knitr::kable()</code></pre>
 <table>
 <thead>
-<tr>
-<th style="text-align:left;">
-variable
-</th>
-<th style="text-align:right;">
-estimate
-</th>
-<th style="text-align:right;">
-mean_closed
-</th>
-<th style="text-align:right;">
-mean_open
-</th>
-<th style="text-align:right;">
-statistic
-</th>
-<th style="text-align:right;">
-p.value
-</th>
-<th style="text-align:right;">
-parameter
-</th>
-<th style="text-align:right;">
-conf.low
-</th>
-<th style="text-align:right;">
-conf.high
-</th>
-<th style="text-align:left;">
-method
-</th>
-<th style="text-align:left;">
-alternative
-</th>
+<tr class="header">
+<th align="left">variable</th>
+<th align="right">estimate</th>
+<th align="right">mean_closed</th>
+<th align="right">mean_open</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+<th align="right">parameter</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
+<th align="left">method</th>
+<th align="left">alternative</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td style="text-align:left;">
-area
-</td>
-<td style="text-align:right;">
-0.05170
-</td>
-<td style="text-align:right;">
-3.02e-04
-</td>
-<td style="text-align:right;">
--0.05140
-</td>
-<td style="text-align:right;">
-4.0300
-</td>
-<td style="text-align:right;">
-7.62e-05
-</td>
-<td style="text-align:right;">
-240
-</td>
-<td style="text-align:right;">
-0.0264
-</td>
-<td style="text-align:right;">
-0.0771
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="odd">
+<td align="left">area</td>
+<td align="right">0.05170</td>
+<td align="right">3.02e-04</td>
+<td align="right">-0.05140</td>
+<td align="right">4.0300</td>
+<td align="right">7.62e-05</td>
+<td align="right">240</td>
+<td align="right">0.0264</td>
+<td align="right">0.0771</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-income_ss
-</td>
-<td style="text-align:right;">
-0.35700
-</td>
-<td style="text-align:right;">
-2.09e-03
-</td>
-<td style="text-align:right;">
--0.35500
-</td>
-<td style="text-align:right;">
-3.9700
-</td>
-<td style="text-align:right;">
-1.26e-04
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
-0.1790
-</td>
-<td style="text-align:right;">
-0.5350
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="even">
+<td align="left">income_ss</td>
+<td align="right">0.35700</td>
+<td align="right">2.09e-03</td>
+<td align="right">-0.35500</td>
+<td align="right">3.9700</td>
+<td align="right">1.26e-04</td>
+<td align="right">113</td>
+<td align="right">0.1790</td>
+<td align="right">0.5350</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-poverty
-</td>
-<td style="text-align:right;">
--0.39900
-</td>
-<td style="text-align:right;">
--2.33e-03
-</td>
-<td style="text-align:right;">
-0.39600
-</td>
-<td style="text-align:right;">
--3.5900
-</td>
-<td style="text-align:right;">
-4.89e-04
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.6180
-</td>
-<td style="text-align:right;">
--0.1790
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="odd">
+<td align="left">poverty</td>
+<td align="right">-0.39900</td>
+<td align="right">-2.33e-03</td>
+<td align="right">0.39600</td>
+<td align="right">-3.5900</td>
+<td align="right">4.89e-04</td>
+<td align="right">113</td>
+<td align="right">-0.6180</td>
+<td align="right">-0.1790</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-seniors
-</td>
-<td style="text-align:right;">
--0.36700
-</td>
-<td style="text-align:right;">
--2.15e-03
-</td>
-<td style="text-align:right;">
-0.36500
-</td>
-<td style="text-align:right;">
--3.4200
-</td>
-<td style="text-align:right;">
-8.59e-04
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.5800
-</td>
-<td style="text-align:right;">
--0.1550
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="even">
+<td align="left">seniors</td>
+<td align="right">-0.36700</td>
+<td align="right">-2.15e-03</td>
+<td align="right">0.36500</td>
+<td align="right">-3.4200</td>
+<td align="right">8.59e-04</td>
+<td align="right">113</td>
+<td align="right">-0.5800</td>
+<td align="right">-0.1550</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-pop
-</td>
-<td style="text-align:right;">
-0.28800
-</td>
-<td style="text-align:right;">
-1.68e-03
-</td>
-<td style="text-align:right;">
--0.28600
-</td>
-<td style="text-align:right;">
-3.0900
-</td>
-<td style="text-align:right;">
-2.51e-03
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
-0.1030
-</td>
-<td style="text-align:right;">
-0.4730
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="odd">
+<td align="left">pop</td>
+<td align="right">0.28800</td>
+<td align="right">1.68e-03</td>
+<td align="right">-0.28600</td>
+<td align="right">3.0900</td>
+<td align="right">2.51e-03</td>
+<td align="right">113</td>
+<td align="right">0.1030</td>
+<td align="right">0.4730</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-black
-</td>
-<td style="text-align:right;">
--0.42000
-</td>
-<td style="text-align:right;">
--2.46e-03
-</td>
-<td style="text-align:right;">
-0.41800
-</td>
-<td style="text-align:right;">
--2.8800
-</td>
-<td style="text-align:right;">
-4.77e-03
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.7100
-</td>
-<td style="text-align:right;">
--0.1310
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="even">
+<td align="left">black</td>
+<td align="right">-0.42000</td>
+<td align="right">-2.46e-03</td>
+<td align="right">0.41800</td>
+<td align="right">-2.8800</td>
+<td align="right">4.77e-03</td>
+<td align="right">113</td>
+<td align="right">-0.7100</td>
+<td align="right">-0.1310</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-income
-</td>
-<td style="text-align:right;">
--0.36000
-</td>
-<td style="text-align:right;">
--2.10e-03
-</td>
-<td style="text-align:right;">
-0.35800
-</td>
-<td style="text-align:right;">
--2.8500
-</td>
-<td style="text-align:right;">
-5.26e-03
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.6110
-</td>
-<td style="text-align:right;">
--0.1090
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="odd">
+<td align="left">income</td>
+<td align="right">-0.36000</td>
+<td align="right">-2.10e-03</td>
+<td align="right">0.35800</td>
+<td align="right">-2.8500</td>
+<td align="right">5.26e-03</td>
+<td align="right">113</td>
+<td align="right">-0.6110</td>
+<td align="right">-0.1090</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-english_imp
-</td>
-<td style="text-align:right;">
--0.28700
-</td>
-<td style="text-align:right;">
--1.68e-03
-</td>
-<td style="text-align:right;">
-0.28500
-</td>
-<td style="text-align:right;">
--2.5100
-</td>
-<td style="text-align:right;">
-1.34e-02
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.5130
-</td>
-<td style="text-align:right;">
--0.0607
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="even">
+<td align="left">english_imp</td>
+<td align="right">-0.28700</td>
+<td align="right">-1.68e-03</td>
+<td align="right">0.28500</td>
+<td align="right">-2.5100</td>
+<td align="right">1.34e-02</td>
+<td align="right">113</td>
+<td align="right">-0.5130</td>
+<td align="right">-0.0607</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-income_publass
-</td>
-<td style="text-align:right;">
-0.16400
-</td>
-<td style="text-align:right;">
-9.57e-04
-</td>
-<td style="text-align:right;">
--0.16300
-</td>
-<td style="text-align:right;">
-1.7000
-</td>
-<td style="text-align:right;">
-9.14e-02
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.0268
-</td>
-<td style="text-align:right;">
-0.3540
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="odd">
+<td align="left">income_publass</td>
+<td align="right">0.16400</td>
+<td align="right">9.57e-04</td>
+<td align="right">-0.16300</td>
+<td align="right">1.7000</td>
+<td align="right">9.14e-02</td>
+<td align="right">113</td>
+<td align="right">-0.0268</td>
+<td align="right">0.3540</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-educ_hsgrad
-</td>
-<td style="text-align:right;">
--0.09890
-</td>
-<td style="text-align:right;">
--5.78e-04
-</td>
-<td style="text-align:right;">
-0.09830
-</td>
-<td style="text-align:right;">
--0.9440
-</td>
-<td style="text-align:right;">
-3.47e-01
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.3060
-</td>
-<td style="text-align:right;">
-0.1090
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="even">
+<td align="left">educ_hsgrad</td>
+<td align="right">-0.09890</td>
+<td align="right">-5.78e-04</td>
+<td align="right">0.09830</td>
+<td align="right">-0.9440</td>
+<td align="right">3.47e-01</td>
+<td align="right">113</td>
+<td align="right">-0.3060</td>
+<td align="right">0.1090</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-num_tracts
-</td>
-<td style="text-align:right;">
--0.07840
-</td>
-<td style="text-align:right;">
--4.58e-04
-</td>
-<td style="text-align:right;">
-0.07800
-</td>
-<td style="text-align:right;">
--0.7600
-</td>
-<td style="text-align:right;">
-4.49e-01
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.2830
-</td>
-<td style="text-align:right;">
-0.1260
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="odd">
+<td align="left">num_tracts</td>
+<td align="right">-0.07840</td>
+<td align="right">-4.58e-04</td>
+<td align="right">0.07800</td>
+<td align="right">-0.7600</td>
+<td align="right">4.49e-01</td>
+<td align="right">113</td>
+<td align="right">-0.2830</td>
+<td align="right">0.1260</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-total_comp17
-</td>
-<td style="text-align:right;">
--0.06870
-</td>
-<td style="text-align:right;">
--4.02e-04
-</td>
-<td style="text-align:right;">
-0.06830
-</td>
-<td style="text-align:right;">
--0.6480
-</td>
-<td style="text-align:right;">
-5.18e-01
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.2790
-</td>
-<td style="text-align:right;">
-0.1410
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="even">
+<td align="left">total_comp17</td>
+<td align="right">-0.06870</td>
+<td align="right">-4.02e-04</td>
+<td align="right">0.06830</td>
+<td align="right">-0.6480</td>
+<td align="right">5.18e-01</td>
+<td align="right">113</td>
+<td align="right">-0.2790</td>
+<td align="right">0.1410</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-white
-</td>
-<td style="text-align:right;">
--0.05400
-</td>
-<td style="text-align:right;">
--3.16e-04
-</td>
-<td style="text-align:right;">
-0.05370
-</td>
-<td style="text-align:right;">
--0.5230
-</td>
-<td style="text-align:right;">
-6.02e-01
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.2590
-</td>
-<td style="text-align:right;">
-0.1500
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="odd">
+<td align="left">white</td>
+<td align="right">-0.05400</td>
+<td align="right">-3.16e-04</td>
+<td align="right">0.05370</td>
+<td align="right">-0.5230</td>
+<td align="right">6.02e-01</td>
+<td align="right">113</td>
+<td align="right">-0.2590</td>
+<td align="right">0.1500</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-nn_dist
-</td>
-<td style="text-align:right;">
-0.02710
-</td>
-<td style="text-align:right;">
-1.58e-04
-</td>
-<td style="text-align:right;">
--0.02690
-</td>
-<td style="text-align:right;">
-0.2880
-</td>
-<td style="text-align:right;">
-7.74e-01
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.1590
-</td>
-<td style="text-align:right;">
-0.2140
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="even">
+<td align="left">nn_dist</td>
+<td align="right">0.02710</td>
+<td align="right">1.58e-04</td>
+<td align="right">-0.02690</td>
+<td align="right">0.2880</td>
+<td align="right">7.74e-01</td>
+<td align="right">113</td>
+<td align="right">-0.1590</td>
+<td align="right">0.2140</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-no_comp17
-</td>
-<td style="text-align:right;">
--0.02150
-</td>
-<td style="text-align:right;">
--1.26e-04
-</td>
-<td style="text-align:right;">
-0.02140
-</td>
-<td style="text-align:right;">
--0.2000
-</td>
-<td style="text-align:right;">
-8.42e-01
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.2340
-</td>
-<td style="text-align:right;">
-0.1910
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="odd">
+<td align="left">no_comp17</td>
+<td align="right">-0.02150</td>
+<td align="right">-1.26e-04</td>
+<td align="right">0.02140</td>
+<td align="right">-0.2000</td>
+<td align="right">8.42e-01</td>
+<td align="right">113</td>
+<td align="right">-0.2340</td>
+<td align="right">0.1910</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
-<tr>
-<td style="text-align:left;">
-total_internet17
-</td>
-<td style="text-align:right;">
--0.00982
-</td>
-<td style="text-align:right;">
--5.74e-05
-</td>
-<td style="text-align:right;">
-0.00976
-</td>
-<td style="text-align:right;">
--0.0941
-</td>
-<td style="text-align:right;">
-9.25e-01
-</td>
-<td style="text-align:right;">
-113
-</td>
-<td style="text-align:right;">
--0.2170
-</td>
-<td style="text-align:right;">
-0.1970
-</td>
-<td style="text-align:left;">
-Welch Two Sample t-test
-</td>
-<td style="text-align:left;">
-two.sided
-</td>
+<tr class="even">
+<td align="left">total_internet17</td>
+<td align="right">-0.00982</td>
+<td align="right">-5.74e-05</td>
+<td align="right">0.00976</td>
+<td align="right">-0.0941</td>
+<td align="right">9.25e-01</td>
+<td align="right">113</td>
+<td align="right">-0.2170</td>
+<td align="right">0.1970</td>
+<td align="left">Welch Two Sample t-test</td>
+<td align="left">two.sided</td>
 </tr>
 </tbody>
 </table>
@@ -3536,26 +3162,26 @@ absolute[ , confusionMatrix(kluster, reference = closed, positive = &quot;1&quot
 ## 
 ##           Reference
 ## Prediction     0     1
-##          0  4718    43
-##          1 14508    70
+##          0 14508    70
+##          1  4718    43
 ##                                           
-##                Accuracy : 0.2476          
-##                  95% CI : (0.2415, 0.2537)
+##                Accuracy : 0.7524          
+##                  95% CI : (0.7463, 0.7585)
 ##     No Information Rate : 0.9942          
 ##     P-Value [Acc &gt; NIR] : 1               
 ##                                           
-##                   Kappa : -0.0021         
+##                   Kappa : 0.0063          
 ##                                           
 ##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
 ##                                           
-##             Sensitivity : 0.619469        
-##             Specificity : 0.245397        
-##          Pos Pred Value : 0.004802        
-##          Neg Pred Value : 0.990968        
+##             Sensitivity : 0.380531        
+##             Specificity : 0.754603        
+##          Pos Pred Value : 0.009032        
+##          Neg Pred Value : 0.995198        
 ##              Prevalence : 0.005843        
-##          Detection Rate : 0.003620        
-##    Detection Prevalence : 0.753814        
-##       Balanced Accuracy : 0.432433        
+##          Detection Rate : 0.002223        
+##    Detection Prevalence : 0.246186        
+##       Balanced Accuracy : 0.567567        
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
@@ -4215,7 +3841,228 @@ confusionMatrix(models$RF.absolute$predicted,
 </div>
 <div id="out-of-sample-prediction" class="section level1">
 <h1>Out-of-sample prediction</h1>
-<p>Terrible. Zero true positives.</p>
+<pre class="r"><code>set.seed(575)
+test &lt;- sample_frac(absolute, 0.20)
+train &lt;- setdiff(absolute, test)</code></pre>
+<pre class="r"><code>logit &lt;- glm(data = train, 
+             formula = form_absolute, 
+             family = binomial(link = &quot;logit&quot;))
+
+mean_out_train &lt;- train[ , mean(as.numeric(as.character(closed)))]
+
+test[ , caret::confusionMatrix(closed, 
+                               predict(logit, newdata = test, type = &quot;response&quot;) %&gt;% 
+                                 cutoff(threshold = mean_out_train))]</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 2276 1571
+##          1    5   16
+##                                           
+##                Accuracy : 0.5926          
+##                  95% CI : (0.5769, 0.6081)
+##     No Information Rate : 0.5897          
+##     P-Value [Acc &gt; NIR] : 0.366           
+##                                           
+##                   Kappa : 0.0093          
+##                                           
+##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
+##                                           
+##             Sensitivity : 0.99781         
+##             Specificity : 0.01008         
+##          Pos Pred Value : 0.59163         
+##          Neg Pred Value : 0.76190         
+##              Prevalence : 0.58971         
+##          Detection Rate : 0.58842         
+##    Detection Prevalence : 0.99457         
+##       Balanced Accuracy : 0.50394         
+##                                           
+##        &#39;Positive&#39; Class : 0               
+## </code></pre>
+<pre class="r"><code>mtries &lt;- 3:8
+mods &lt;- 
+  parallel::mclapply(mtries,
+                     FUN = function(mtry) 
+                       randomForest(x = train[ , ..vars_absolute],
+                                    y = train[ , closed], mtry = mtry),
+                     mc.cores = length(mtries))
+
+map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test))]) %&gt;% 
+  setNames(mtries)</code></pre>
+<pre><code>## $`3`
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 3841    6
+##          1   21    0
+##                                           
+##                Accuracy : 0.993           
+##                  95% CI : (0.9899, 0.9954)
+##     No Information Rate : 0.9984          
+##     P-Value [Acc &gt; NIR] : 1.000000        
+##                                           
+##                   Kappa : -0.0024         
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.007054        
+##                                           
+##             Sensitivity : 0.9946          
+##             Specificity : 0.0000          
+##          Pos Pred Value : 0.9984          
+##          Neg Pred Value : 0.0000          
+##              Prevalence : 0.9984          
+##          Detection Rate : 0.9930          
+##    Detection Prevalence : 0.9946          
+##       Balanced Accuracy : 0.4973          
+##                                           
+##        &#39;Positive&#39; Class : 0               
+##                                           
+## 
+## $`4`
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 3839    8
+##          1   21    0
+##                                          
+##                Accuracy : 0.9925         
+##                  95% CI : (0.9893, 0.995)
+##     No Information Rate : 0.9979         
+##     P-Value [Acc &gt; NIR] : 1.00000        
+##                                          
+##                   Kappa : -0.003         
+##                                          
+##  Mcnemar&#39;s Test P-Value : 0.02586        
+##                                          
+##             Sensitivity : 0.9946         
+##             Specificity : 0.0000         
+##          Pos Pred Value : 0.9979         
+##          Neg Pred Value : 0.0000         
+##              Prevalence : 0.9979         
+##          Detection Rate : 0.9925         
+##    Detection Prevalence : 0.9946         
+##       Balanced Accuracy : 0.4973         
+##                                          
+##        &#39;Positive&#39; Class : 0              
+##                                          
+## 
+## $`5`
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 3840    7
+##          1   21    0
+##                                           
+##                Accuracy : 0.9928          
+##                  95% CI : (0.9896, 0.9952)
+##     No Information Rate : 0.9982          
+##     P-Value [Acc &gt; NIR] : 1.00000         
+##                                           
+##                   Kappa : -0.0027         
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.01402         
+##                                           
+##             Sensitivity : 0.9946          
+##             Specificity : 0.0000          
+##          Pos Pred Value : 0.9982          
+##          Neg Pred Value : 0.0000          
+##              Prevalence : 0.9982          
+##          Detection Rate : 0.9928          
+##    Detection Prevalence : 0.9946          
+##       Balanced Accuracy : 0.4973          
+##                                           
+##        &#39;Positive&#39; Class : 0               
+##                                           
+## 
+## $`6`
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 3841    6
+##          1   21    0
+##                                           
+##                Accuracy : 0.993           
+##                  95% CI : (0.9899, 0.9954)
+##     No Information Rate : 0.9984          
+##     P-Value [Acc &gt; NIR] : 1.000000        
+##                                           
+##                   Kappa : -0.0024         
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.007054        
+##                                           
+##             Sensitivity : 0.9946          
+##             Specificity : 0.0000          
+##          Pos Pred Value : 0.9984          
+##          Neg Pred Value : 0.0000          
+##              Prevalence : 0.9984          
+##          Detection Rate : 0.9930          
+##    Detection Prevalence : 0.9946          
+##       Balanced Accuracy : 0.4973          
+##                                           
+##        &#39;Positive&#39; Class : 0               
+##                                           
+## 
+## $`7`
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 3838    9
+##          1   21    0
+##                                           
+##                Accuracy : 0.9922          
+##                  95% CI : (0.9889, 0.9948)
+##     No Information Rate : 0.9977          
+##     P-Value [Acc &gt; NIR] : 1.00000         
+##                                           
+##                   Kappa : -0.0033         
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.04461         
+##                                           
+##             Sensitivity : 0.9946          
+##             Specificity : 0.0000          
+##          Pos Pred Value : 0.9977          
+##          Neg Pred Value : 0.0000          
+##              Prevalence : 0.9977          
+##          Detection Rate : 0.9922          
+##    Detection Prevalence : 0.9946          
+##       Balanced Accuracy : 0.4973          
+##                                           
+##        &#39;Positive&#39; Class : 0               
+##                                           
+## 
+## $`8`
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 3838    9
+##          1   21    0
+##                                           
+##                Accuracy : 0.9922          
+##                  95% CI : (0.9889, 0.9948)
+##     No Information Rate : 0.9977          
+##     P-Value [Acc &gt; NIR] : 1.00000         
+##                                           
+##                   Kappa : -0.0033         
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.04461         
+##                                           
+##             Sensitivity : 0.9946          
+##             Specificity : 0.0000          
+##          Pos Pred Value : 0.9977          
+##          Neg Pred Value : 0.0000          
+##              Prevalence : 0.9977          
+##          Detection Rate : 0.9922          
+##    Detection Prevalence : 0.9946          
+##       Balanced Accuracy : 0.4973          
+##                                           
+##        &#39;Positive&#39; Class : 0               
+## </code></pre>
 </div>
 
 
