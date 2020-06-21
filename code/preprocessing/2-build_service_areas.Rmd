@@ -140,13 +140,21 @@ voronoi <- dplyr::bind_rows(state_vorl)
 ```
 
 ### California plot
+
 ```{r}
-ggplot(voronoi %>% filter(state %in% c("CA"))) +
+plot_ca <- 
+  ggplot(voronoi %>% filter(state %in% c("CA"))) +
   geom_sf(data = states_sf %>% filter(STUSPS == "CA")) + 
-  geom_sf(alpha = 0.2) + 
+  geom_sf(alpha = 0.2, linetype = "dotted") + 
   geom_sf(size = 0.5,
           data = offices %>% filter(state == "CA")) +
   theme_void()
+
+plot_ca
+```
+
+```{r}
+ggsave(plot = plot_ca, filename = "writing/figures/ca_service.pdf")
 ```
 
 
