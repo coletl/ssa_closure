@@ -50,7 +50,7 @@ library(stargazer)
 ```
 
 ```{r final prep, child = "0-final_prep.Rmd"}
-stopifnot(exists("absolute"))
+source("code/analysis/0-final_prep.R")
 ```
 
 ```{r resampling}
@@ -80,6 +80,39 @@ balDT <-
 
 # estimate: estimate1 - estimate2 = treatment - control
 setnames(balDT, c("estimate1", "estimate2"), c("mean_closed", "mean_open"))
+
+balDT[ , 
+       varname := c("White population", "Black population", "English proficiency",
+                    "Aggregate income", "Public assistance income", "Social Security income", "Poverty",
+                    "Seniors", "High school grads", "Population", 
+                    "Computers", "No computer", "Internet", "Service area size", 
+                    "Distance to nearest office", "Number of Census tracts") %>% 
+         as.factor()
+       ]
+```
+
+
+```{r}
+setorder(balDT, -estimate)
+balDT[ , varname := factor(varname, levels = varname)]
+```
+
+```{r}
+plot_bal <- 
+  ggplot(balDT) +
+  geom_pointrange(aes(x = varname, y = estimate, 
+                      ymin = conf.low, ymax = conf.high),
+                  size = 0.2) +
+  geom_hline(aes(yintercept = 0), linetype = "dashed") +
+  labs(x = "Predictor", 
+       y = latex2exp::TeX("$\\mu_{closed} - \\mu_{open}$")) +
+  coord_flip() + theme_bw(10)
+
+plot_bal
+```
+
+```{r}
+ggsave(plot = plot_bal, filename = "writing/figures/diffmeans.pdf")
 ```
 
 
@@ -93,7 +126,7 @@ round_num <- function(data, func = round, digits = 3){
   return(out)
 }
 
-balDT[order(-abs(statistic))] %>% 
+balDT[order(-abs(estimate))] %>% 
   round_num(func = signif, digits = 3) %>% 
   knitr::kable()
 ```
