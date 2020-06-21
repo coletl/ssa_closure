@@ -179,7 +179,7 @@ stargazer::stargazer(
   notes.append = FALSE, notes.align = "l",
   
   omit.stat = c("aic", "ll"), 
-  type = "html",
+  type = "html", header = FALSE,
   out = "writing/tables/tab_logit.tex"
   )
 ```
@@ -316,27 +316,76 @@ confusionMatrix(
 
 ### Original sample
 ```{r}
-models$RF.absolute$importance %>% 
-  as_tibble(rownames = "variable") %>% 
-  arrange(-MeanDecreaseAccuracy)
+importance_orig <- 
+  models$RF.absolute$importance %>% 
+  as_tibble(rownames = "variable")
+ 
+arrange(importance_orig, -MeanDecreaseAccuracy)
 ```
 
 ### Upsampled
 ```{r}
-models$RF.absolute_upsamp$importance %>% 
-  as_tibble(rownames = "variable") %>% 
-  arrange(-MeanDecreaseAccuracy)
+importance_upsamp <- 
+  models$RF.absolute_upsamp$importance %>% 
+  as_tibble(rownames = "variable")
+
+
+arrange(importance_upsamp, -MeanDecreaseAccuracy)
 ```
 
 ### Downsampled
 ```{r}
-models$RF.absolute_downsamp$importance %>% 
-  as_tibble(rownames = "variable") %>% 
-  arrange(-MeanDecreaseAccuracy)
+importance_downsamp <- 
+  models$RF.absolute_downsamp$importance %>% 
+  as_tibble(rownames = "variable")
+
+arrange(importance_downsamp, -MeanDecreaseAccuracy)
+```
+
+### Comparison figure
+
+```{r}
+importances <- 
+  rbindlist(list(Original = importance_orig, 
+                 Upsample = importance_upsamp, 
+                 Downsample = importance_downsamp), 
+            idcol = "Sample")
 ```
 
 
-## Confusion matrix
+```{r}
+importances[ , Sample := as.factor(Sample)
+             ][ , Sample := factor(Sample, levels = c("Original", "Upsample", "Downsample"))]
+
+
+importances[balDT, varname := i.varname, on = "variable"]
+
+importances[ , 
+             varname := factor(varname, 
+                               levels = .SD[Sample == "Original"
+                                            ][order(MeanDecreaseAccuracy), unique(varname)])
+             ]
+```
+
+```{r}
+plot_importance <- 
+  ggplot(importances) +
+  geom_col(aes(x = varname, y = MeanDecreaseAccuracy),
+           width = 0.25, position = "dodge") +
+  facet_grid(. ~ Sample, scale = "free") +
+  scale_y_continuous(n.breaks = 4) +
+  labs(x = "Variable", y = "Relative importance (mean decrease in accuracy)") +
+  theme_bw(10) + coord_flip()
+
+plot_importance
+```
+
+```{r}
+ggsave(plot = plot_importance, filename = "writing/figures/rf_importances.pdf")
+```
+
+
+## Confusion matrix {.tabset}
 
 Full versions of the output in 2-eval script.
 
