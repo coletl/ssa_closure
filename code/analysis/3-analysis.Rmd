@@ -53,6 +53,17 @@ library(stargazer)
 stopifnot(exists("absolute"))
 ```
 
+```{r resampling}
+# Up-sample
+absolute_upsamp  <- absolute[ , upSample(.SD, closed)]
+percap_upsamp    <- percap[   , upSample(.SD, closed)]
+  
+# Down-sample
+absolute_downsamp  <- absolute[ , downSample(.SD, closed)]
+percap_downsamp    <- percap[   , downSample(.SD, closed)]
+```
+
+
 ```{r}
 models <- readRDS("data/fitted_models.rds")
 ```
@@ -108,7 +119,7 @@ models$logit.absolute.std <-
       data = absolute_std)
 ```
 
-```{r baseline, results = "asis"}
+```{r baseline, results = "asis", eval = FALSE, include = FALSE}
 logit_absolute <- 
   list(models$logit.absolute)
 
@@ -141,7 +152,7 @@ stargazer::stargazer(
 ```
 
 
-```{r bias corrected, results = "asis", eval = FALSE}
+```{r bias corrected, results = "asis", eval = FALSE, include = FALSE}
 logit_absolute <- 
   list(models$logit.absolute,
        brglm::brglm(formula = form_absolute, family = binomial(link = "logit"),
@@ -180,7 +191,7 @@ stargazer::stargazer(
 
 
 
-```{r augment, results = "asis", eval = FALSE}
+```{r augment, results = "asis", eval = TRUE}
 logit_absolute <- 
   list(models$logit.absolute,
        models$logit.absolute_upsamp,
@@ -215,7 +226,12 @@ stargazer::stargazer(
 ```
 
 
-## Confusion matrix: fitted values
+## Confusion matrix: fitted values {.tabset}
+
+Full versions of the output in 2-eval script.
+
+### Original sample
+
 ```{r}
 confusionMatrix(
   
@@ -223,6 +239,34 @@ confusionMatrix(
     cutoff(., threshold = median(.)),
   
   reference = absolute$closed,
+  
+  positive = "1"
+)
+```
+
+### Upsample
+
+```{r}
+confusionMatrix(
+  
+  models$logit.absolute_upsamp$fitted.values %>% 
+    cutoff(., threshold = median(.)),
+  
+  reference = absolute_upsamp$closed,
+  
+  positive = "1"
+)
+```
+
+### Downsample
+
+```{r}
+confusionMatrix(
+  
+  models$logit.absolute_downsamp$fitted.values %>% 
+    cutoff(., threshold = median(.)),
+  
+  reference = absolute_downsamp$closed,
   
   positive = "1"
 )
@@ -239,10 +283,13 @@ models$RF.absolute$importance %>%
 
 
 ## Confusion matrix
-### Fitted values
+
+Full versions of the output in 2-eval script.
+
+
+### Original sample
 
 ```{r}
-# Fitted
 confusionMatrix(predict(models$RF.absolute, newdata = absolute),
   
   reference = absolute$closed,
@@ -250,15 +297,45 @@ confusionMatrix(predict(models$RF.absolute, newdata = absolute),
   positive = "1")
 ```
 
-### OOB predictions
+### Upsample
+
 ```{r}
-# OOB prediction
-confusionMatrix(models$RF.absolute$predicted,
+confusionMatrix(predict(models$RF.absolute_upsamp, newdata = absolute),
   
   reference = absolute$closed,
   
   positive = "1")
 ```
+
+```{r}
+models$RF.absolute_upsamp
+```
+
+
+### Downsample
+
+```{r}
+confusionMatrix(predict(models$RF.absolute_downsamp, newdata = absolute),
+  
+  reference = absolute$closed,
+  
+  positive = "1")
+```
+
+```{r}
+models$RF.absolute_downsamp
+```
+
+
+<!-- ### OOB predictions -->
+<!-- ```{r} -->
+<!-- # OOB prediction -->
+<!-- confusionMatrix(models$RF.absolute$predicted, -->
+
+<!--   reference = absolute$closed, -->
+
+<!--   positive = "1") -->
+<!-- ``` -->
 
 # Out-of-sample prediction
 
@@ -267,6 +344,10 @@ set.seed(575)
 test <- sample_frac(absolute, 0.20)
 train <- setdiff(absolute, test)
 ```
+
+## Logit {.tabset}
+
+### Original sample
 
 ```{r}
 logit <- glm(data = train, 
@@ -277,8 +358,52 @@ mean_out_train <- train[ , mean(as.numeric(as.character(closed)))]
 
 test[ , caret::confusionMatrix(closed, 
                                predict(logit, newdata = test, type = "response") %>% 
-                                 cutoff(threshold = mean_out_train))]
+                                 cutoff(threshold = mean_out_train),
+                               
+                               positive = "1")
+      ]
 ```
+
+### Upsample
+```{r}
+train_upsamp <- train[ , upSample(train, closed)] %>% as.data.table()
+
+logit <- glm(data = train_upsamp, 
+             formula = form_absolute, 
+             family = binomial(link = "logit"))
+
+mean_out_train <- train_upsamp[ , mean(as.numeric(as.character(closed)))]
+
+test[ , caret::confusionMatrix(closed, 
+                               predict(logit, newdata = test, type = "response") %>% 
+                                 cutoff(threshold = mean_out_train),
+                               
+                               positive = "1")
+      ]
+```
+
+### Downsample
+```{r}
+train_downsamp <- train[ , downSample(train, closed)] %>% as.data.table()
+
+logit <- glm(data = train_downsamp, 
+             formula = form_absolute, 
+             family = binomial(link = "logit"))
+
+mean_out_train <- train_downsamp[ , mean(as.numeric(as.character(closed)))]
+
+test[ , caret::confusionMatrix(closed, 
+                               predict(logit, newdata = test, type = "response") %>% 
+                                 cutoff(threshold = mean_out_train),
+                               
+                               positive = "1")
+      ]
+```
+
+
+## Random forest
+
+Not really necessary since we have OOB performance.
 
 ```{r}
 mtries <- 3:8
@@ -289,7 +414,8 @@ mods <-
                                     y = train[ , closed], mtry = mtry),
                      mc.cores = length(mtries))
 
-map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test))]) %>% 
+map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test),
+                                           positive = "1")]) %>% 
   setNames(mtries)
 ```
 

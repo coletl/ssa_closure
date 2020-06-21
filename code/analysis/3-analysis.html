@@ -2810,7 +2810,7 @@ div.tocify {
 </div>
 
 
-<p>Updated: Jun 21, 2020 at 07:37:46 +04.</p>
+<p>Updated: Jun 21, 2020 at 08:57:48 +04.</p>
 <p>Working directory: <code>/home/ctl277/Dropbox/ssa_closure</code>.</p>
 <p>Reads:</p>
 <ul>
@@ -2898,6 +2898,13 @@ form_percap &lt;- reformulate(termlabels = vars_percap, response = &quot;closed&
 <div id="standardize-absolutes-predictors" class="section level2">
 <h2>Standardize absolute’s predictors</h2>
 <pre class="r"><code>set_cols(absolute, j = vars_absolute, FUN = scale)</code></pre>
+<pre class="r"><code># Up-sample
+absolute_upsamp  &lt;- absolute[ , upSample(.SD, closed)]
+percap_upsamp    &lt;- percap[   , upSample(.SD, closed)]
+  
+# Down-sample
+absolute_downsamp  &lt;- absolute[ , downSample(.SD, closed)]
+percap_downsamp    &lt;- percap[   , downSample(.SD, closed)]</code></pre>
 <pre class="r"><code>models &lt;- readRDS(&quot;data/fitted_models.rds&quot;)</code></pre>
 </div>
 </div>
@@ -3199,488 +3206,6 @@ models$logit.absolute.std &lt;-
   glm(formula = form_absolute, family = binomial(link = &quot;logit&quot;), 
       data = absolute_std)</code></pre>
 <pre class="r"><code>logit_absolute &lt;- 
-  list(models$logit.absolute)
-
-outcome_means &lt;- map(logit_absolute, c(&quot;data&quot;, &quot;closed&quot;)) %&gt;% 
-  map( ~ mean(as.numeric(as.character(.x)))) %&gt;% unlist() %&gt;% 
-  round(3)
-
-
-stargazer::stargazer(
-  logit_absolute,
-  
-  # column.labels = c(&quot;Original&quot;, &quot;Upsampled&quot;, &quot;Downsampled&quot;),
-  # ci = TRUE, 
-  # star.cutoffs = c(NULL, NA, NA), se = list(NULL, NA, NA),
-  covariate.labels = c(&quot;White population&quot;, &quot;Black population&quot;, &quot;English proficiency&quot;,
-                       &quot;Aggregate income&quot;, &quot;Social Security income&quot;, &quot;Poverty&quot;,
-                       &quot;Seniors&quot;, &quot;High school grads&quot;, &quot;Population&quot;, 
-                       &quot;Computers&quot;, &quot;No computer&quot;, &quot;Internet&quot;, &quot;Service area size&quot;, 
-                       &quot;Distance to nearest office&quot;, &quot;Number of Census tracts&quot;),
-  
-  add.lines = list(c(&quot;Prop. closed&quot;, outcome_means[1])),
-  
-  notes = &quot;Standard errors in parentheses. Predictors were scaled by one standard deviation.&quot;,
-  notes.append = FALSE, notes.align = &quot;l&quot;,
-  
-  omit.stat = c(&quot;aic&quot;, &quot;ll&quot;), 
-  type = &quot;html&quot;,
-  out = &quot;writing/tables/tab_logit.tex&quot;
-  )</code></pre>
-<table style="text-align:center">
-<tr>
-<td colspan="2" style="border-bottom: 1px solid black">
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-<em>Dependent variable:</em>
-</td>
-</tr>
-<tr>
-<td>
-</td>
-<td colspan="1" style="border-bottom: 1px solid black">
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-closed
-</td>
-</tr>
-<tr>
-<td colspan="2" style="border-bottom: 1px solid black">
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-White population
-</td>
-<td>
-0.260
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.573)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Black population
-</td>
-<td>
-0.555<sup>***</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.205)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-English proficiency
-</td>
-<td>
-0.467<sup>***</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.164)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Aggregate income
-</td>
-<td>
-0.317
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.245)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Social Security income
-</td>
-<td>
--0.083
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.187)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Poverty
-</td>
-<td>
--0.476
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.525)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Seniors
-</td>
-<td>
--0.836
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.746)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-High school grads
-</td>
-<td>
-0.657<sup>*</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.340)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Population
-</td>
-<td>
--0.637<sup>**</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.324)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Computers
-</td>
-<td>
--0.202
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.679)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-No computer
-</td>
-<td>
-0.203
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.465)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Internet
-</td>
-<td>
-1.029
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.708)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Service area size
-</td>
-<td>
--1.296
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.796)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Distance to nearest office
-</td>
-<td>
--0.116
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.561)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Number of Census tracts
-</td>
-<td>
--0.079
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.103)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-num_tracts
-</td>
-<td>
--0.193
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.346)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Constant
-</td>
-<td>
--5.428<sup>***</sup>
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-(0.123)
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-</td>
-<td>
-</td>
-</tr>
-<tr>
-<td colspan="2" style="border-bottom: 1px solid black">
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Prop. closed
-</td>
-<td>
-0.006
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-Observations
-</td>
-<td>
-19,339
-</td>
-</tr>
-<tr>
-<td colspan="2" style="border-bottom: 1px solid black">
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-<em>Note:</em>
-</td>
-<td style="text-align:left">
-Standard errors in parentheses. Predictors were scaled by one standard deviation.
-</td>
-</tr>
-</table>
-<pre class="r"><code>logit_absolute &lt;- 
-  list(models$logit.absolute,
-       brglm::brglm(formula = form_absolute, family = binomial(link = &quot;logit&quot;),
-               data = mutate(absolute_std, closed = as.numeric(as.character(closed)))))
-
-brglm::brglm(formula = form_absolute, family = binomial(link = &quot;logit&quot;),
-               data = mutate(absolute_std, closed = as.numeric(as.character(closed))))
-
-outcome_means &lt;- map(logit_absolute, c(&quot;data&quot;, &quot;closed&quot;)) %&gt;% 
-  map( ~ mean(as.numeric(as.character(.x)))) %&gt;% unlist() %&gt;% 
-  round(3)
-
-
-stargazer::stargazer(
-  logit_absolute,
-  
-  # column.labels = c(&quot;Original&quot;, &quot;Upsampled&quot;, &quot;Downsampled&quot;),
-  # ci = TRUE, 
-  # star.cutoffs = c(NULL, NA, NA), se = list(NULL, NA, NA),
-  covariate.labels = c(&quot;White population&quot;, &quot;Black population&quot;, &quot;English proficiency&quot;,
-                       &quot;Aggregate income&quot;, &quot;Social Security income&quot;, &quot;Poverty&quot;,
-                       &quot;Seniors&quot;, &quot;High school grads&quot;, &quot;Population&quot;, 
-                       &quot;Computers&quot;, &quot;No computer&quot;, &quot;Internet&quot;, &quot;Service area size&quot;, 
-                       &quot;Distance to nearest office&quot;, &quot;Number of Census tracts&quot;),
-  
-  add.lines = list(c(&quot;Prop. closed&quot;, outcome_means[1])),
-  
-  notes = &quot;Standard errors in parentheses. Predictors were scaled by one standard deviation.&quot;,
-  notes.append = FALSE, notes.align = &quot;l&quot;,
-  
-  omit.stat = c(&quot;aic&quot;, &quot;ll&quot;), 
-  type = &quot;html&quot;,
-  out = &quot;writing/tables/tab_logit.tex&quot;
-  )</code></pre>
-<pre class="r"><code>logit_absolute &lt;- 
   list(models$logit.absolute,
        models$logit.absolute_upsamp,
        models$logit.absolute_downsamp)
@@ -3711,10 +3236,708 @@ stargazer::stargazer(
   type = &quot;html&quot;,
   out = &quot;writing/tables/tab_logit.tex&quot;
   )</code></pre>
+<table style="text-align:center">
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td colspan="3">
+<em>Dependent variable:</em>
+</td>
+</tr>
+<tr>
+<td>
+</td>
+<td colspan="3" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td colspan="3">
+closed
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+Original
+</td>
+<td>
+Upsampled
+</td>
+<td>
+Downsampled
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(1)
+</td>
+<td>
+(2)
+</td>
+<td>
+(3)
+</td>
+</tr>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+White population
+</td>
+<td>
+0.260
+</td>
+<td>
+-0.078
+</td>
+<td>
+-3.615
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.573)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Black population
+</td>
+<td>
+0.555
+</td>
+<td>
+0.563
+</td>
+<td>
+-0.453
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.205)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+English proficiency
+</td>
+<td>
+0.467
+</td>
+<td>
+0.653
+</td>
+<td>
+-0.246
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.164)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Aggregate income
+</td>
+<td>
+0.317
+</td>
+<td>
+0.487
+</td>
+<td>
+1.183
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.245)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Social Security income
+</td>
+<td>
+-0.083
+</td>
+<td>
+-0.267
+</td>
+<td>
+-0.085
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.187)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Poverty
+</td>
+<td>
+-0.476
+</td>
+<td>
+-0.670
+</td>
+<td>
+-0.423
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.525)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Seniors
+</td>
+<td>
+-0.836
+</td>
+<td>
+-1.138
+</td>
+<td>
+1.873
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.746)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+High school grads
+</td>
+<td>
+0.657
+</td>
+<td>
+0.673
+</td>
+<td>
+0.775
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.340)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Population
+</td>
+<td>
+-0.637
+</td>
+<td>
+-0.261
+</td>
+<td>
+0.182
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.324)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Computers
+</td>
+<td>
+-0.202
+</td>
+<td>
+-0.036
+</td>
+<td>
+1.367
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.679)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+No computer
+</td>
+<td>
+0.203
+</td>
+<td>
+0.246
+</td>
+<td>
+0.588
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.465)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Internet
+</td>
+<td>
+1.029
+</td>
+<td>
+1.269
+</td>
+<td>
+2.182
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.708)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Service area size
+</td>
+<td>
+-1.296
+</td>
+<td>
+-1.699
+</td>
+<td>
+-2.894
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.796)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Distance to nearest office
+</td>
+<td>
+-0.116
+</td>
+<td>
+-0.077
+</td>
+<td>
+0.512
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.561)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Number of Census tracts
+</td>
+<td>
+-0.079
+</td>
+<td>
+-0.079
+</td>
+<td>
+-0.045
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.103)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+num_tracts
+</td>
+<td>
+-0.193
+</td>
+<td>
+-0.005
+</td>
+<td>
+0.056
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.346)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Constant
+</td>
+<td>
+-5.428
+</td>
+<td>
+-0.322
+</td>
+<td>
+-0.214
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+(0.123)
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+</td>
+<td>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Prop. closed
+</td>
+<td>
+0.006
+</td>
+<td>
+0.5
+</td>
+<td>
+0.5
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+Observations
+</td>
+<td>
+19,339
+</td>
+<td>
+38,452
+</td>
+<td>
+226
+</td>
+</tr>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+<em>Note:</em>
+</td>
+<td colspan="3" style="text-align:left">
+Standard errors in parentheses. Predictors were scaled by one standard deviation. I omit uncertainty estimates for the up- and downsampled data sets because they are incomparable, and statistical significance there is meaningless.
+</td>
+</tr>
+</table>
 </div>
 </div>
-<div id="confusion-matrix-fitted-values" class="section level2">
+<div id="confusion-matrix-fitted-values" class="section level2 tabset">
 <h2>Confusion matrix: fitted values</h2>
+<p>Full versions of the output in 2-eval script.</p>
+<div id="original-sample" class="section level3">
+<h3>Original sample</h3>
 <pre class="r"><code>confusionMatrix(
   
   models$logit.absolute$fitted.values %&gt;% 
@@ -3752,6 +3975,85 @@ stargazer::stargazer(
 ##        &#39;Positive&#39; Class : 1              
 ## </code></pre>
 </div>
+<div id="upsample" class="section level3">
+<h3>Upsample</h3>
+<pre class="r"><code>confusionMatrix(
+  
+  models$logit.absolute_upsamp$fitted.values %&gt;% 
+    cutoff(., threshold = median(.)),
+  
+  reference = absolute_upsamp$closed,
+  
+  positive = &quot;1&quot;
+)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction     0     1
+##          0 12559  6811
+##          1  6667 12415
+##                                           
+##                Accuracy : 0.6495          
+##                  95% CI : (0.6447, 0.6543)
+##     No Information Rate : 0.5             
+##     P-Value [Acc &gt; NIR] : &lt;2e-16          
+##                                           
+##                   Kappa : 0.299           
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.218           
+##                                           
+##             Sensitivity : 0.6457          
+##             Specificity : 0.6532          
+##          Pos Pred Value : 0.6506          
+##          Neg Pred Value : 0.6484          
+##              Prevalence : 0.5000          
+##          Detection Rate : 0.3229          
+##    Detection Prevalence : 0.4963          
+##       Balanced Accuracy : 0.6495          
+##                                           
+##        &#39;Positive&#39; Class : 1               
+## </code></pre>
+</div>
+<div id="downsample" class="section level3">
+<h3>Downsample</h3>
+<pre class="r"><code>confusionMatrix(
+  
+  models$logit.absolute_downsamp$fitted.values %&gt;% 
+    cutoff(., threshold = median(.)),
+  
+  reference = absolute_downsamp$closed,
+  
+  positive = &quot;1&quot;
+)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction  0  1
+##          0 76 37
+##          1 37 76
+##                                           
+##                Accuracy : 0.6726          
+##                  95% CI : (0.6072, 0.7333)
+##     No Information Rate : 0.5             
+##     P-Value [Acc &gt; NIR] : 1.16e-07        
+##                                           
+##                   Kappa : 0.3451          
+##                                           
+##  Mcnemar&#39;s Test P-Value : 1               
+##                                           
+##             Sensitivity : 0.6726          
+##             Specificity : 0.6726          
+##          Pos Pred Value : 0.6726          
+##          Neg Pred Value : 0.6726          
+##              Prevalence : 0.5000          
+##          Detection Rate : 0.3363          
+##    Detection Prevalence : 0.5000          
+##       Balanced Accuracy : 0.6726          
+##                                           
+##        &#39;Positive&#39; Class : 1               
+## </code></pre>
+</div>
+</div>
 </div>
 <div id="random-forest" class="section level1">
 <h1>Random forest</h1>
@@ -3765,10 +4067,10 @@ stargazer::stargazer(
 </div>
 <div id="confusion-matrix" class="section level2">
 <h2>Confusion matrix</h2>
-<div id="fitted-values" class="section level3">
-<h3>Fitted values</h3>
-<pre class="r"><code># Fitted
-confusionMatrix(predict(models$RF.absolute, newdata = absolute),
+<p>Full versions of the output in 2-eval script.</p>
+<div id="original-sample-1" class="section level3">
+<h3>Original sample</h3>
+<pre class="r"><code>confusionMatrix(predict(models$RF.absolute, newdata = absolute),
   
   reference = absolute$closed,
   
@@ -3801,10 +4103,9 @@ confusionMatrix(predict(models$RF.absolute, newdata = absolute),
 ##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
 </div>
-<div id="oob-predictions" class="section level3">
-<h3>OOB predictions</h3>
-<pre class="r"><code># OOB prediction
-confusionMatrix(models$RF.absolute$predicted,
+<div id="upsample-1" class="section level3">
+<h3>Upsample</h3>
+<pre class="r"><code>confusionMatrix(predict(models$RF.absolute_upsamp, newdata = absolute),
   
   reference = absolute$closed,
   
@@ -3813,29 +4114,97 @@ confusionMatrix(models$RF.absolute$predicted,
 ## 
 ##           Reference
 ## Prediction     0     1
-##          0 19190   113
-##          1    36     0
-##                                          
-##                Accuracy : 0.9923         
-##                  95% CI : (0.991, 0.9935)
-##     No Information Rate : 0.9942         
-##     P-Value [Acc &gt; NIR] : 0.9995         
-##                                          
-##                   Kappa : -0.0028        
-##                                          
-##  Mcnemar&#39;s Test P-Value : 4.78e-10       
-##                                          
-##             Sensitivity : 0.000000       
-##             Specificity : 0.998128       
-##          Pos Pred Value : 0.000000       
-##          Neg Pred Value : 0.994146       
-##              Prevalence : 0.005843       
-##          Detection Rate : 0.000000       
-##    Detection Prevalence : 0.001862       
-##       Balanced Accuracy : 0.499064       
-##                                          
-##        &#39;Positive&#39; Class : 1              
+##          0 19189     0
+##          1    37   113
+##                                           
+##                Accuracy : 0.9981          
+##                  95% CI : (0.9974, 0.9987)
+##     No Information Rate : 0.9942          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.8584          
+##                                           
+##  Mcnemar&#39;s Test P-Value : 3.252e-09       
+##                                           
+##             Sensitivity : 1.000000        
+##             Specificity : 0.998076        
+##          Pos Pred Value : 0.753333        
+##          Neg Pred Value : 1.000000        
+##              Prevalence : 0.005843        
+##          Detection Rate : 0.005843        
+##    Detection Prevalence : 0.007756        
+##       Balanced Accuracy : 0.999038        
+##                                           
+##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
+<pre class="r"><code>models$RF.absolute_upsamp</code></pre>
+<pre><code>## 
+## Call:
+##  randomForest(formula = as.formula(form_absolute), data = dt,      ntree = 1000, importance = TRUE) 
+##                Type of random forest: classification
+##                      Number of trees: 1000
+## No. of variables tried at each split: 4
+## 
+##         OOB estimate of  error rate: 0.17%
+## Confusion matrix:
+##       0     1 class.error
+## 0 19161    65 0.003380838
+## 1     0 19226 0.000000000</code></pre>
+</div>
+<div id="downsample-1" class="section level3">
+<h3>Downsample</h3>
+<pre class="r"><code>confusionMatrix(predict(models$RF.absolute_downsamp, newdata = absolute),
+  
+  reference = absolute$closed,
+  
+  positive = &quot;1&quot;)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction     0     1
+##          0 11455     0
+##          1  7771   113
+##                                           
+##                Accuracy : 0.5982          
+##                  95% CI : (0.5912, 0.6051)
+##     No Information Rate : 0.9942          
+##     P-Value [Acc &gt; NIR] : 1               
+##                                           
+##                   Kappa : 0.0169          
+##                                           
+##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
+##                                           
+##             Sensitivity : 1.000000        
+##             Specificity : 0.595808        
+##          Pos Pred Value : 0.014333        
+##          Neg Pred Value : 1.000000        
+##              Prevalence : 0.005843        
+##          Detection Rate : 0.005843        
+##    Detection Prevalence : 0.407674        
+##       Balanced Accuracy : 0.797904        
+##                                           
+##        &#39;Positive&#39; Class : 1               
+## </code></pre>
+<pre class="r"><code>models$RF.absolute_downsamp</code></pre>
+<pre><code>## 
+## Call:
+##  randomForest(formula = as.formula(form_absolute), data = dt,      ntree = 1000, importance = TRUE) 
+##                Type of random forest: classification
+##                      Number of trees: 1000
+## No. of variables tried at each split: 4
+## 
+##         OOB estimate of  error rate: 34.51%
+## Confusion matrix:
+##    0  1 class.error
+## 0 73 40   0.3539823
+## 1 38 75   0.3362832</code></pre>
+<!-- ### OOB predictions -->
+<!-- ```{r} -->
+<!-- # OOB prediction -->
+<!-- confusionMatrix(models$RF.absolute$predicted, -->
+<!--   reference = absolute$closed, -->
+<!--   positive = "1") -->
+<!-- ``` -->
 </div>
 </div>
 </div>
@@ -3844,6 +4213,10 @@ confusionMatrix(models$RF.absolute$predicted,
 <pre class="r"><code>set.seed(575)
 test &lt;- sample_frac(absolute, 0.20)
 train &lt;- setdiff(absolute, test)</code></pre>
+<div id="logit-1" class="section level2 tabset">
+<h2>Logit</h2>
+<div id="original-sample-2" class="section level3">
+<h3>Original sample</h3>
 <pre class="r"><code>logit &lt;- glm(data = train, 
              formula = form_absolute, 
              family = binomial(link = &quot;logit&quot;))
@@ -3852,7 +4225,10 @@ mean_out_train &lt;- train[ , mean(as.numeric(as.character(closed)))]
 
 test[ , caret::confusionMatrix(closed, 
                                predict(logit, newdata = test, type = &quot;response&quot;) %&gt;% 
-                                 cutoff(threshold = mean_out_train))]</code></pre>
+                                 cutoff(threshold = mean_out_train),
+                               
+                               positive = &quot;1&quot;)
+      ]</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
@@ -3869,17 +4245,110 @@ test[ , caret::confusionMatrix(closed,
 ##                                           
 ##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
 ##                                           
-##             Sensitivity : 0.99781         
-##             Specificity : 0.01008         
-##          Pos Pred Value : 0.59163         
-##          Neg Pred Value : 0.76190         
-##              Prevalence : 0.58971         
-##          Detection Rate : 0.58842         
-##    Detection Prevalence : 0.99457         
-##       Balanced Accuracy : 0.50394         
+##             Sensitivity : 0.010082        
+##             Specificity : 0.997808        
+##          Pos Pred Value : 0.761905        
+##          Neg Pred Value : 0.591630        
+##              Prevalence : 0.410290        
+##          Detection Rate : 0.004137        
+##    Detection Prevalence : 0.005429        
+##       Balanced Accuracy : 0.503945        
 ##                                           
-##        &#39;Positive&#39; Class : 0               
+##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
+</div>
+<div id="upsample-2" class="section level3">
+<h3>Upsample</h3>
+<pre class="r"><code>train_upsamp &lt;- train[ , upSample(train, closed)] %&gt;% as.data.table()
+
+logit &lt;- glm(data = train_upsamp, 
+             formula = form_absolute, 
+             family = binomial(link = &quot;logit&quot;))
+
+mean_out_train &lt;- train_upsamp[ , mean(as.numeric(as.character(closed)))]
+
+test[ , caret::confusionMatrix(closed, 
+                               predict(logit, newdata = test, type = &quot;response&quot;) %&gt;% 
+                                 cutoff(threshold = mean_out_train),
+                               
+                               positive = &quot;1&quot;)
+      ]</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 2571 1276
+##          1    8   13
+##                                          
+##                Accuracy : 0.668          
+##                  95% CI : (0.653, 0.6829)
+##     No Information Rate : 0.6668         
+##     P-Value [Acc &gt; NIR] : 0.4397         
+##                                          
+##                   Kappa : 0.0093         
+##                                          
+##  Mcnemar&#39;s Test P-Value : &lt;2e-16         
+##                                          
+##             Sensitivity : 0.010085       
+##             Specificity : 0.996898       
+##          Pos Pred Value : 0.619048       
+##          Neg Pred Value : 0.668313       
+##              Prevalence : 0.333247       
+##          Detection Rate : 0.003361       
+##    Detection Prevalence : 0.005429       
+##       Balanced Accuracy : 0.503492       
+##                                          
+##        &#39;Positive&#39; Class : 1              
+## </code></pre>
+</div>
+<div id="downsample-2" class="section level3">
+<h3>Downsample</h3>
+<pre class="r"><code>train_downsamp &lt;- train[ , downSample(train, closed)] %&gt;% as.data.table()
+
+logit &lt;- glm(data = train_downsamp, 
+             formula = form_absolute, 
+             family = binomial(link = &quot;logit&quot;))
+
+mean_out_train &lt;- train_downsamp[ , mean(as.numeric(as.character(closed)))]
+
+test[ , caret::confusionMatrix(closed, 
+                               predict(logit, newdata = test, type = &quot;response&quot;) %&gt;% 
+                                 cutoff(threshold = mean_out_train),
+                               
+                               positive = &quot;1&quot;)
+      ]</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 2269 1578
+##          1    7   14
+##                                           
+##                Accuracy : 0.5902          
+##                  95% CI : (0.5745, 0.6058)
+##     No Information Rate : 0.5884          
+##     P-Value [Acc &gt; NIR] : 0.4163          
+##                                           
+##                   Kappa : 0.0067          
+##                                           
+##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
+##                                           
+##             Sensitivity : 0.008794        
+##             Specificity : 0.996924        
+##          Pos Pred Value : 0.666667        
+##          Neg Pred Value : 0.589810        
+##              Prevalence : 0.411582        
+##          Detection Rate : 0.003619        
+##    Detection Prevalence : 0.005429        
+##       Balanced Accuracy : 0.502859        
+##                                           
+##        &#39;Positive&#39; Class : 1               
+## </code></pre>
+</div>
+</div>
+<div id="random-forest-1" class="section level2">
+<h2>Random forest</h2>
+<p>Not really necessary since we have OOB performance.</p>
 <pre class="r"><code>mtries &lt;- 3:8
 mods &lt;- 
   parallel::mclapply(mtries,
@@ -3888,67 +4357,10 @@ mods &lt;-
                                     y = train[ , closed], mtry = mtry),
                      mc.cores = length(mtries))
 
-map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test))]) %&gt;% 
+map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test),
+                                           positive = &quot;1&quot;)]) %&gt;% 
   setNames(mtries)</code></pre>
 <pre><code>## $`3`
-## Confusion Matrix and Statistics
-## 
-##           Reference
-## Prediction    0    1
-##          0 3841    6
-##          1   21    0
-##                                           
-##                Accuracy : 0.993           
-##                  95% CI : (0.9899, 0.9954)
-##     No Information Rate : 0.9984          
-##     P-Value [Acc &gt; NIR] : 1.000000        
-##                                           
-##                   Kappa : -0.0024         
-##                                           
-##  Mcnemar&#39;s Test P-Value : 0.007054        
-##                                           
-##             Sensitivity : 0.9946          
-##             Specificity : 0.0000          
-##          Pos Pred Value : 0.9984          
-##          Neg Pred Value : 0.0000          
-##              Prevalence : 0.9984          
-##          Detection Rate : 0.9930          
-##    Detection Prevalence : 0.9946          
-##       Balanced Accuracy : 0.4973          
-##                                           
-##        &#39;Positive&#39; Class : 0               
-##                                           
-## 
-## $`4`
-## Confusion Matrix and Statistics
-## 
-##           Reference
-## Prediction    0    1
-##          0 3839    8
-##          1   21    0
-##                                          
-##                Accuracy : 0.9925         
-##                  95% CI : (0.9893, 0.995)
-##     No Information Rate : 0.9979         
-##     P-Value [Acc &gt; NIR] : 1.00000        
-##                                          
-##                   Kappa : -0.003         
-##                                          
-##  Mcnemar&#39;s Test P-Value : 0.02586        
-##                                          
-##             Sensitivity : 0.9946         
-##             Specificity : 0.0000         
-##          Pos Pred Value : 0.9979         
-##          Neg Pred Value : 0.0000         
-##              Prevalence : 0.9979         
-##          Detection Rate : 0.9925         
-##    Detection Prevalence : 0.9946         
-##       Balanced Accuracy : 0.4973         
-##                                          
-##        &#39;Positive&#39; Class : 0              
-##                                          
-## 
-## $`5`
 ## Confusion Matrix and Statistics
 ## 
 ##           Reference
@@ -3965,16 +4377,74 @@ map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test))]
 ##                                           
 ##  Mcnemar&#39;s Test P-Value : 0.01402         
 ##                                           
-##             Sensitivity : 0.9946          
-##             Specificity : 0.0000          
-##          Pos Pred Value : 0.9982          
-##          Neg Pred Value : 0.0000          
-##              Prevalence : 0.9982          
-##          Detection Rate : 0.9928          
-##    Detection Prevalence : 0.9946          
-##       Balanced Accuracy : 0.4973          
+##             Sensitivity : 0.000000        
+##             Specificity : 0.994561        
+##          Pos Pred Value : 0.000000        
+##          Neg Pred Value : 0.998180        
+##              Prevalence : 0.001810        
+##          Detection Rate : 0.000000        
+##    Detection Prevalence : 0.005429        
+##       Balanced Accuracy : 0.497280        
 ##                                           
-##        &#39;Positive&#39; Class : 0               
+##        &#39;Positive&#39; Class : 1               
+##                                           
+## 
+## $`4`
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 3840    7
+##          1   21    0
+##                                           
+##                Accuracy : 0.9928          
+##                  95% CI : (0.9896, 0.9952)
+##     No Information Rate : 0.9982          
+##     P-Value [Acc &gt; NIR] : 1.00000         
+##                                           
+##                   Kappa : -0.0027         
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.01402         
+##                                           
+##             Sensitivity : 0.000000        
+##             Specificity : 0.994561        
+##          Pos Pred Value : 0.000000        
+##          Neg Pred Value : 0.998180        
+##              Prevalence : 0.001810        
+##          Detection Rate : 0.000000        
+##    Detection Prevalence : 0.005429        
+##       Balanced Accuracy : 0.497280        
+##                                           
+##        &#39;Positive&#39; Class : 1               
+##                                           
+## 
+## $`5`
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 3837   10
+##          1   21    0
+##                                           
+##                Accuracy : 0.992           
+##                  95% CI : (0.9886, 0.9945)
+##     No Information Rate : 0.9974          
+##     P-Value [Acc &gt; NIR] : 1.00000         
+##                                           
+##                   Kappa : -0.0035         
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.07249         
+##                                           
+##             Sensitivity : 0.000000        
+##             Specificity : 0.994557        
+##          Pos Pred Value : 0.000000        
+##          Neg Pred Value : 0.997401        
+##              Prevalence : 0.002585        
+##          Detection Rate : 0.000000        
+##    Detection Prevalence : 0.005429        
+##       Balanced Accuracy : 0.497278        
+##                                           
+##        &#39;Positive&#39; Class : 1               
 ##                                           
 ## 
 ## $`6`
@@ -3982,29 +4452,29 @@ map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test))]
 ## 
 ##           Reference
 ## Prediction    0    1
-##          0 3841    6
+##          0 3839    8
 ##          1   21    0
-##                                           
-##                Accuracy : 0.993           
-##                  95% CI : (0.9899, 0.9954)
-##     No Information Rate : 0.9984          
-##     P-Value [Acc &gt; NIR] : 1.000000        
-##                                           
-##                   Kappa : -0.0024         
-##                                           
-##  Mcnemar&#39;s Test P-Value : 0.007054        
-##                                           
-##             Sensitivity : 0.9946          
-##             Specificity : 0.0000          
-##          Pos Pred Value : 0.9984          
-##          Neg Pred Value : 0.0000          
-##              Prevalence : 0.9984          
-##          Detection Rate : 0.9930          
-##    Detection Prevalence : 0.9946          
-##       Balanced Accuracy : 0.4973          
-##                                           
-##        &#39;Positive&#39; Class : 0               
-##                                           
+##                                          
+##                Accuracy : 0.9925         
+##                  95% CI : (0.9893, 0.995)
+##     No Information Rate : 0.9979         
+##     P-Value [Acc &gt; NIR] : 1.00000        
+##                                          
+##                   Kappa : -0.003         
+##                                          
+##  Mcnemar&#39;s Test P-Value : 0.02586        
+##                                          
+##             Sensitivity : 0.000000       
+##             Specificity : 0.994560       
+##          Pos Pred Value : 0.000000       
+##          Neg Pred Value : 0.997920       
+##              Prevalence : 0.002068       
+##          Detection Rate : 0.000000       
+##    Detection Prevalence : 0.005429       
+##       Balanced Accuracy : 0.497280       
+##                                          
+##        &#39;Positive&#39; Class : 1              
+##                                          
 ## 
 ## $`7`
 ## Confusion Matrix and Statistics
@@ -4023,16 +4493,16 @@ map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test))]
 ##                                           
 ##  Mcnemar&#39;s Test P-Value : 0.04461         
 ##                                           
-##             Sensitivity : 0.9946          
-##             Specificity : 0.0000          
-##          Pos Pred Value : 0.9977          
-##          Neg Pred Value : 0.0000          
-##              Prevalence : 0.9977          
-##          Detection Rate : 0.9922          
-##    Detection Prevalence : 0.9946          
-##       Balanced Accuracy : 0.4973          
+##             Sensitivity : 0.000000        
+##             Specificity : 0.994558        
+##          Pos Pred Value : 0.000000        
+##          Neg Pred Value : 0.997661        
+##              Prevalence : 0.002327        
+##          Detection Rate : 0.000000        
+##    Detection Prevalence : 0.005429        
+##       Balanced Accuracy : 0.497279        
 ##                                           
-##        &#39;Positive&#39; Class : 0               
+##        &#39;Positive&#39; Class : 1               
 ##                                           
 ## 
 ## $`8`
@@ -4052,17 +4522,18 @@ map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test))]
 ##                                           
 ##  Mcnemar&#39;s Test P-Value : 0.04461         
 ##                                           
-##             Sensitivity : 0.9946          
-##             Specificity : 0.0000          
-##          Pos Pred Value : 0.9977          
-##          Neg Pred Value : 0.0000          
-##              Prevalence : 0.9977          
-##          Detection Rate : 0.9922          
-##    Detection Prevalence : 0.9946          
-##       Balanced Accuracy : 0.4973          
+##             Sensitivity : 0.000000        
+##             Specificity : 0.994558        
+##          Pos Pred Value : 0.000000        
+##          Neg Pred Value : 0.997661        
+##              Prevalence : 0.002327        
+##          Detection Rate : 0.000000        
+##    Detection Prevalence : 0.005429        
+##       Balanced Accuracy : 0.497279        
 ##                                           
-##        &#39;Positive&#39; Class : 0               
+##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
+</div>
 </div>
 
 
