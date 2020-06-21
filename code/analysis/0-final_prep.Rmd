@@ -47,7 +47,7 @@ offcompl$closed <- as.factor(offcompl$closed)
 Remove 2015 data since the closure data seem to run through 2014, despite the SSA stating the data come from 2016.
 
 ```{r}
-offcompl <- offcompl[year %in% as.character(2010:2014)]
+offcompl <- offcompl[year %in% as.character(2000:2014)]
 ```
 
 Test with two data sets: per capita and absolute values. I redefine here.
@@ -99,11 +99,15 @@ vars_percap <- paste0("prop_", setdiff(vars_absolute, vars_nopc)) %>%
   c("pop")
 
 form_percap <- reformulate(termlabels = vars_percap, response = "closed")
-
-
 ```
 
 Some places actually had zero population (interpolated from census tracts).
 ```{r}
 percap <- percap[pop > 0]
 ```
+
+## Standardize absolute's predictors
+```{r}
+set_cols(absolute, j = vars_absolute, FUN = scale)
+```
+
