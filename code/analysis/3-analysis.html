@@ -2810,7 +2810,7 @@ div.tocify {
 </div>
 
 
-<p>Updated: Jun 22, 2020 at 01:18:40 +04.</p>
+<p>Updated: Jun 22, 2020 at 22:31:06 +04.</p>
 <p>Working directory: <code>/home/ctl277/Dropbox/ssa_closure</code>.</p>
 <p>Reads:</p>
 <ul>
@@ -3263,9 +3263,9 @@ stargazer::stargazer(
   column.labels = c(&quot;Original&quot;, &quot;Upsampled&quot;, &quot;Downsampled&quot;),
   # ci = TRUE, 
   star.cutoffs = c(NULL, NA, NA), se = list(NULL, NA, NA),
-  covariate.labels = c(&quot;Constant&quot;, 
+  covariate.labels = c(#&quot;Constant&quot;, 
                        &quot;White population&quot;, &quot;Black population&quot;, &quot;English proficiency&quot;,
-                       &quot;Aggregate income&quot;, &quot;Social Security income&quot;, &quot;Poverty&quot;,
+                       &quot;Aggregate income&quot;, &quot;Public assistance income&quot;, &quot;Social Security income&quot;, &quot;Poverty&quot;,
                        &quot;Seniors&quot;, &quot;High school grads&quot;, &quot;Population&quot;, 
                        &quot;Computers&quot;, &quot;No computer&quot;, &quot;Internet&quot;, &quot;Service area size&quot;, 
                        &quot;Distance to nearest office&quot;, &quot;Number of Census tracts&quot;),
@@ -3342,7 +3342,7 @@ Downsampled
 </tr>
 <tr>
 <td style="text-align:left">
-Constant
+White population
 </td>
 <td>
 0.260
@@ -3377,7 +3377,7 @@ Constant
 </tr>
 <tr>
 <td style="text-align:left">
-White population
+Black population
 </td>
 <td>
 0.555
@@ -3412,7 +3412,7 @@ White population
 </tr>
 <tr>
 <td style="text-align:left">
-Black population
+English proficiency
 </td>
 <td>
 0.467
@@ -3447,7 +3447,7 @@ Black population
 </tr>
 <tr>
 <td style="text-align:left">
-English proficiency
+Aggregate income
 </td>
 <td>
 0.317
@@ -3482,7 +3482,7 @@ English proficiency
 </tr>
 <tr>
 <td style="text-align:left">
-Aggregate income
+Public assistance income
 </td>
 <td>
 -0.083
@@ -4277,28 +4277,28 @@ plot_importance</code></pre>
 ## 
 ##           Reference
 ## Prediction     0     1
-##          0 11456     0
-##          1  7770   113
-##                                           
-##                Accuracy : 0.5982          
-##                  95% CI : (0.5913, 0.6051)
-##     No Information Rate : 0.9942          
-##     P-Value [Acc &gt; NIR] : 1               
-##                                           
-##                   Kappa : 0.0169          
-##                                           
-##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
-##                                           
-##             Sensitivity : 1.000000        
-##             Specificity : 0.595860        
-##          Pos Pred Value : 0.014335        
-##          Neg Pred Value : 1.000000        
-##              Prevalence : 0.005843        
-##          Detection Rate : 0.005843        
-##    Detection Prevalence : 0.407622        
-##       Balanced Accuracy : 0.797930        
-##                                           
-##        &#39;Positive&#39; Class : 1               
+##          0 11454     0
+##          1  7772   113
+##                                          
+##                Accuracy : 0.5981         
+##                  95% CI : (0.5912, 0.605)
+##     No Information Rate : 0.9942         
+##     P-Value [Acc &gt; NIR] : 1              
+##                                          
+##                   Kappa : 0.0169         
+##                                          
+##  Mcnemar&#39;s Test P-Value : &lt;2e-16         
+##                                          
+##             Sensitivity : 1.000000       
+##             Specificity : 0.595756       
+##          Pos Pred Value : 0.014331       
+##          Neg Pred Value : 1.000000       
+##              Prevalence : 0.005843       
+##          Detection Rate : 0.005843       
+##    Detection Prevalence : 0.407725       
+##       Balanced Accuracy : 0.797878       
+##                                          
+##        &#39;Positive&#39; Class : 1              
 ## </code></pre>
 <pre class="r"><code>models$RF.absolute_downsamp</code></pre>
 <pre><code>## 
@@ -4480,31 +4480,60 @@ map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test),
 ## 
 ##           Reference
 ## Prediction    0    1
-##          0 3841    6
+##          0 3839    8
+##          1   21    0
+##                                          
+##                Accuracy : 0.9925         
+##                  95% CI : (0.9893, 0.995)
+##     No Information Rate : 0.9979         
+##     P-Value [Acc &gt; NIR] : 1.00000        
+##                                          
+##                   Kappa : -0.003         
+##                                          
+##  Mcnemar&#39;s Test P-Value : 0.02586        
+##                                          
+##             Sensitivity : 0.000000       
+##             Specificity : 0.994560       
+##          Pos Pred Value : 0.000000       
+##          Neg Pred Value : 0.997920       
+##              Prevalence : 0.002068       
+##          Detection Rate : 0.000000       
+##    Detection Prevalence : 0.005429       
+##       Balanced Accuracy : 0.497280       
+##                                          
+##        &#39;Positive&#39; Class : 1              
+##                                          
+## 
+## $`4`
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    0    1
+##          0 3838    9
 ##          1   21    0
 ##                                           
-##                Accuracy : 0.993           
-##                  95% CI : (0.9899, 0.9954)
-##     No Information Rate : 0.9984          
-##     P-Value [Acc &gt; NIR] : 1.000000        
+##                Accuracy : 0.9922          
+##                  95% CI : (0.9889, 0.9948)
+##     No Information Rate : 0.9977          
+##     P-Value [Acc &gt; NIR] : 1.00000         
 ##                                           
-##                   Kappa : -0.0024         
+##                   Kappa : -0.0033         
 ##                                           
-##  Mcnemar&#39;s Test P-Value : 0.007054        
+##  Mcnemar&#39;s Test P-Value : 0.04461         
 ##                                           
 ##             Sensitivity : 0.000000        
-##             Specificity : 0.994562        
+##             Specificity : 0.994558        
 ##          Pos Pred Value : 0.000000        
-##          Neg Pred Value : 0.998440        
-##              Prevalence : 0.001551        
+##          Neg Pred Value : 0.997661        
+##              Prevalence : 0.002327        
 ##          Detection Rate : 0.000000        
 ##    Detection Prevalence : 0.005429        
-##       Balanced Accuracy : 0.497281        
+##       Balanced Accuracy : 0.497279        
 ##                                           
 ##        &#39;Positive&#39; Class : 1               
 ##                                           
 ## 
-## $`4`
+## $`5`
 ## Confusion Matrix and Statistics
 ## 
 ##           Reference
@@ -4533,63 +4562,34 @@ map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test),
 ##        &#39;Positive&#39; Class : 1               
 ##                                           
 ## 
-## $`5`
-## Confusion Matrix and Statistics
-## 
-##           Reference
-## Prediction    0    1
-##          0 3841    6
-##          1   21    0
-##                                           
-##                Accuracy : 0.993           
-##                  95% CI : (0.9899, 0.9954)
-##     No Information Rate : 0.9984          
-##     P-Value [Acc &gt; NIR] : 1.000000        
-##                                           
-##                   Kappa : -0.0024         
-##                                           
-##  Mcnemar&#39;s Test P-Value : 0.007054        
-##                                           
-##             Sensitivity : 0.000000        
-##             Specificity : 0.994562        
-##          Pos Pred Value : 0.000000        
-##          Neg Pred Value : 0.998440        
-##              Prevalence : 0.001551        
-##          Detection Rate : 0.000000        
-##    Detection Prevalence : 0.005429        
-##       Balanced Accuracy : 0.497281        
-##                                           
-##        &#39;Positive&#39; Class : 1               
-##                                           
-## 
 ## $`6`
 ## Confusion Matrix and Statistics
 ## 
 ##           Reference
 ## Prediction    0    1
-##          0 3839    8
+##          0 3838    9
 ##          1   21    0
-##                                          
-##                Accuracy : 0.9925         
-##                  95% CI : (0.9893, 0.995)
-##     No Information Rate : 0.9979         
-##     P-Value [Acc &gt; NIR] : 1.00000        
-##                                          
-##                   Kappa : -0.003         
-##                                          
-##  Mcnemar&#39;s Test P-Value : 0.02586        
-##                                          
-##             Sensitivity : 0.000000       
-##             Specificity : 0.994560       
-##          Pos Pred Value : 0.000000       
-##          Neg Pred Value : 0.997920       
-##              Prevalence : 0.002068       
-##          Detection Rate : 0.000000       
-##    Detection Prevalence : 0.005429       
-##       Balanced Accuracy : 0.497280       
-##                                          
-##        &#39;Positive&#39; Class : 1              
-##                                          
+##                                           
+##                Accuracy : 0.9922          
+##                  95% CI : (0.9889, 0.9948)
+##     No Information Rate : 0.9977          
+##     P-Value [Acc &gt; NIR] : 1.00000         
+##                                           
+##                   Kappa : -0.0033         
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.04461         
+##                                           
+##             Sensitivity : 0.000000        
+##             Specificity : 0.994558        
+##          Pos Pred Value : 0.000000        
+##          Neg Pred Value : 0.997661        
+##              Prevalence : 0.002327        
+##          Detection Rate : 0.000000        
+##    Detection Prevalence : 0.005429        
+##       Balanced Accuracy : 0.497279        
+##                                           
+##        &#39;Positive&#39; Class : 1               
+##                                           
 ## 
 ## $`7`
 ## Confusion Matrix and Statistics
@@ -4625,28 +4625,28 @@ map(mods, ~ test[ , caret::confusionMatrix(closed, predict(.x, newdata = test),
 ## 
 ##           Reference
 ## Prediction    0    1
-##          0 3839    8
+##          0 3837   10
 ##          1   21    0
-##                                          
-##                Accuracy : 0.9925         
-##                  95% CI : (0.9893, 0.995)
-##     No Information Rate : 0.9979         
-##     P-Value [Acc &gt; NIR] : 1.00000        
-##                                          
-##                   Kappa : -0.003         
-##                                          
-##  Mcnemar&#39;s Test P-Value : 0.02586        
-##                                          
-##             Sensitivity : 0.000000       
-##             Specificity : 0.994560       
-##          Pos Pred Value : 0.000000       
-##          Neg Pred Value : 0.997920       
-##              Prevalence : 0.002068       
-##          Detection Rate : 0.000000       
-##    Detection Prevalence : 0.005429       
-##       Balanced Accuracy : 0.497280       
-##                                          
-##        &#39;Positive&#39; Class : 1              
+##                                           
+##                Accuracy : 0.992           
+##                  95% CI : (0.9886, 0.9945)
+##     No Information Rate : 0.9974          
+##     P-Value [Acc &gt; NIR] : 1.00000         
+##                                           
+##                   Kappa : -0.0035         
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.07249         
+##                                           
+##             Sensitivity : 0.000000        
+##             Specificity : 0.994557        
+##          Pos Pred Value : 0.000000        
+##          Neg Pred Value : 0.997401        
+##              Prevalence : 0.002585        
+##          Detection Rate : 0.000000        
+##    Detection Prevalence : 0.005429        
+##       Balanced Accuracy : 0.497278        
+##                                           
+##        &#39;Positive&#39; Class : 1               
 ## </code></pre>
 </div>
 </div>
